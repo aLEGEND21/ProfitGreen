@@ -25,6 +25,9 @@ class Utils(commands.Cog):
         except Exception as e:
             print(f"Failed to post server count\n{e.__class__.__name__}: {e}")
     
+    @commands.command()
+    async def ping(self, ctx: commands.Context):
+        await ctx.send(f"Pong! ({round(self.bot.latency * 1000)} ms)")
 
 def setup(bot):
     bot.add_cog(Utils(bot))

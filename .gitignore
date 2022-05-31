@@ -1,0 +1,8 @@
+/__pycache__
+/cogs/__pycache__
+
+.env
+profit_green.bat
+server.py
+tasks.db
+TODO

@@ -20,7 +20,7 @@ class Utils(commands.Cog):
     async def update_stats(self):
         """This function runs every 30 minutes to automatically update your server count."""
         try:
-            await self.bot.topggpy.http.post_guild_count(10 ** 4, self.bot.shard_count, self.bot.shard_id) # Post a fake server count to Top.gg
+            await self.bot.topggpy.http.post_guild_count(10243, self.bot.shard_count, self.bot.shard_id) # Post a fake server count to Top.gg
             print(f"Posted server count to Top.gg")
         except Exception as e:
             print(f"Failed to post server count\n{e.__class__.__name__}: {e}")

@@ -20,7 +20,6 @@ class Commands(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        
         # Respond with the embed card of the quote if a quote is included in the message
         if "$" in message.content:
             await message.channel.trigger_typing()

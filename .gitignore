@@ -3,6 +3,5 @@
 
 .env
 profit_green.bat
-server.py
 tasks.db
 TODO

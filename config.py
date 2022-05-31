@@ -15,3 +15,4 @@ class Config:
     TOKEN = os.getenv('TOKEN')
     PREFIX = os.getenv('PREFIX')
     TOPGG_TOKEN = os.getenv('TOPGG_TOKEN')
+    RUN_SERVER = os.getenv('RUN_SERVER')

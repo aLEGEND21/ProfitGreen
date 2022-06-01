@@ -8,6 +8,7 @@ import asyncio
 import sqlite3
 import functools
 from bs4 import BeautifulSoup
+from decimal import Decimal
 
 
 def insensitive_ticker(func):
@@ -43,8 +44,8 @@ class ProfitGreenBot(Bot):
     
     @insensitive_ticker
     async def fetch_quote(self, quote_ticker: str):
-        """Fetch a quote from Yahoo Finance. This function accepts both
-        Stock tickers and Crypto tickers.
+        """Fetch a quote from the ProfitGreenAPI. This function accepts both Stock tickers 
+        and Crypto tickers.
 
         Args:
             quote_ticker (str): The ticker of the stock or crypto that will be searched.
@@ -52,207 +53,21 @@ class ProfitGreenBot(Bot):
         Returns:
             bool or dict: False if the request failed or the data about the quote_ticker
         """
-
-        # Convert args to lowercase
-        quote_ticker = quote_ticker.lower()
-        
-        # Replace the url with the correct quote url
-        url = "https://finance.yahoo.com/quote/<quote>"
+        # Generate the correct url
+        url = "https://ProfitGreenAPI.alegend.repl.co/summary/<quote>"
         url = url.replace("<quote>", quote_ticker)
 
-        # Make the request to the url
-        async with aiohttp.ClientSession() as session:
+        # Make the request to the api
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
             async with session.get(url) as req:
-
-                # Return false if the site redirected to the lookup page meaning that 
-                # the quote could not be found
-                if "lookup" in str(req.url):
-                    return False
-                
-                # Create the soup
-                soup = BeautifulSoup(await req.text(), "html.parser")
-                
-                # Return false if the quote is an ETF
-                if soup.find("li", {"data-test": "HOLDINGS"}) is not None:
-                    return False
-
-                # Store the quote data in a dict which will be returned later
-                quote_data = {}
-                quote_data["quote_ticker"] = quote_ticker
-                
-                # Fetch different quote information if the quote is a crypto
-                if url.endswith("-usd"):
-                    quote_data["type"] = "crypto"
-                    # Get the full crypto name
-                    quote_data["name"] = soup.find(
-                        "h1",
-                        {
-                            "class": "D(ib) Fz(18px)"
-                        }
-                    ).text
-                    # Get the crypto price
-                    quote_data["price"] = soup.find(
-                        "fin-streamer", 
-                        {
-                            "data-symbol": quote_ticker.upper(), 
-                            "data-field": "regularMarketPrice"
-                        }
-                    ).text
-                    # Get the crypto's dollar change
-                    quote_data["dollar_change"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketChange"
-                        }
-                    ).findChild(
-                        "span"
-                    ).text
-                    # Get the crypto's percentage change
-                    quote_data["percent_change"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketChangePercent"
-                        }
-                    ).findChild(
-                        "span"
-                    ).text
-                    # Get the open price
-                    quote_data["open_price"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "OPEN-value"
-                        }
-                    ).text
-                    # Get the day's range
-                    quote_data["days_range"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "DAYS_RANGE-value"
-                        }
-                    ).text
-                    # Get the 52 week range
-                    quote_data["52_week_range"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "FIFTY_TWO_WK_RANGE-value"
-                        }
-                    ).text
-                    # Get the crypto's market cap
-                    quote_data["market_cap"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "MARKET_CAP-value"
-                        }
-                    ).text
-                    # Get the crypto's volume
-                    quote_data["volume"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketVolume"
-                        }
-                    ).text
-
-                # Fetch certain quote information if the quote is a stock
-                else:
-                    quote_data["type"] = "stock"
-                    # Get the full crypto name
-                    quote_data["name"] = soup.find(
-                        "h1",
-                        {
-                            "class": "D(ib) Fz(18px)"
-                        }
-                    ).text
-                    # Get the stock price
-                    quote_data["price"] = soup.find(
-                        "fin-streamer", 
-                        {
-                            "data-symbol": quote_ticker.upper(), 
-                            "data-field": "regularMarketPrice"
-                        }
-                    ).text
-                    # Get the stock's dollar change
-                    quote_data["dollar_change"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketChange"
-                        }
-                    ).findChild(
-                        "span"
-                    ).text
-                    # Get the stock's percentage change
-                    quote_data["percent_change"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketChangePercent"
-                        }
-                    ).findChild(
-                        "span"
-                    ).text
-                    # Get the previous close price
-                    quote_data["previous_close_price"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "PREV_CLOSE-value"
-                        }
-                    ).text
-                    # Get the bid
-                    quote_data["bid"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "BID-value"
-                        }
-                    ).text
-                    # Get the ask
-                    quote_data["ask"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "ASK-value"
-                        }
-                    ).text
-                    # Get the volume
-                    quote_data["volume"] = soup.find(
-                        "fin-streamer",
-                        {
-                            "data-symbol": quote_ticker.upper(),
-                            "data-field": "regularMarketVolume"
-                        }
-                    ).text
-                    # Get the market cap
-                    quote_data["market_cap"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "MARKET_CAP-value"
-                        }
-                    ).text
-                    # Get the beta
-                    quote_data["beta"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "BETA_5Y-value"
-                        }
-                    ).text
-                    # Get the PE Ratio
-                    quote_data["pe_ratio"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "PE_RATIO-value"
-                        }
-                    ).text
-                    # Get the EPS
-                    quote_data["eps"] = soup.find(
-                        "td",
-                        {
-                            "data-test": "EPS_RATIO-value"
-                        }
-                    ).text
-
-        # Return the data collected
-        return quote_data
+                output = await req.json()
+        
+        # Return False if the quote couldn't be found
+        if output.get("error") is not None:
+            return False
+        
+        # Return the data about the quote
+        return output
     
     async def prepare_card(self, quote_data: dict):
         """Creates an embed containing information about a stock or crypto. Pass in the
@@ -265,7 +80,6 @@ class ProfitGreenBot(Bot):
         Returns:
             discord.Embed: The embed containing all information about the quote.
         """
-
         # Create the basic embed data
         em = discord.Embed(
                 title=quote_data["name"]
@@ -273,76 +87,97 @@ class ProfitGreenBot(Bot):
         em.set_footer(text="Sourced From Yahoo Finance", icon_url="https://cdn.discordapp.com/attachments/812338726557450240/957714639637069874/favicon.png")
         em.timestamp = datetime.datetime.now()
         # Change the color of the embed depending on if the asset when up or down
-        if quote_data["dollar_change"].startswith("+"):
+        if quote_data["change-dollar"] > 0:
             em.color = discord.Color.green()
-        elif quote_data["dollar_change"].startswith("-"):
+        elif quote_data["change-dollar"] < 0:
             em.color = discord.Color.red()
+        
+        # Reformat all the integer or float values of the data into strings with commas
+        for key in quote_data:
+            if type(quote_data[key]) == int or type(quote_data[key]) == float:
+                quote_data[key] = format(quote_data[key], ",f") # , = format with commas, f = convert scientific notation to decmial
+                quote_data[key] = quote_data[key].rstrip("0").rstrip(".") # Remove the trailing zeros and decimal point
 
-        if quote_data["type"] == "crypto":
+        if quote_data["_type"] == "crypto":
             em.description = f"""
             :dollar: **Price: ${quote_data["price"]}**
-            :small_red_triangle: **Dollar Change: {quote_data["dollar_change"]}**
-            :part_alternation_mark: **Percentage Change: {quote_data["percent_change"]}**
-            :moneybag: Market Open Price: {quote_data["open_price"]}
+            :small_red_triangle: **Dollar Change: {quote_data["change-dollar"]}**
+            :part_alternation_mark: **Percentage Change: {quote_data["change-percent"]}**
+            :moneybag: Market Open Price: {quote_data["open"]}
 
             __**Metrics:**__
-            :chart: Day's Range: {quote_data["days_range"]}
-            :calendar: 52 Week Range: {quote_data["52_week_range"]}
+            :chart: Day's Range: {quote_data["days-range"]}
+            :calendar: 52 Week Range: {quote_data["52-week-range"]}
             :bar_chart: Volume: {quote_data["volume"]}
-            :coin: Market Cap: ${quote_data["market_cap"]}
+            :coin: Market Cap: ${quote_data["market-cap"]}
             """
 
-        elif quote_data["type"] == "stock":
+        elif quote_data["_type"] == "stock":
             em.description = f"""
             :dollar: **Price: ${quote_data["price"]}**
-            :small_red_triangle: **Dollar Change: {quote_data["dollar_change"]}**
-            :part_alternation_mark: **Percentage Change: {quote_data["percent_change"]}**
-            :moneybag: Previous Close Price: {quote_data["previous_close_price"]}
+            :small_red_triangle: **Dollar Change: {quote_data["change-dollar"]}**
+            :part_alternation_mark: **Percentage Change: {quote_data["change-percent"]}**
+            :moneybag: Previous Close Price: {quote_data["previous-close"]}
 
             __**Metrics:**__
             :hammer: Bid: {quote_data["bid"]}
             :speaking_head: Ask: {quote_data["ask"]}
             :bar_chart: Volume: {quote_data["volume"]}
-            :coin: Market Cap: ${quote_data["market_cap"]}
+            :coin: Market Cap: ${quote_data["market-cap"]}
 
             __**Valuation:**__
             :star: Beta: {quote_data["beta"]}
-            :diamond_shape_with_a_dot_inside: P/E Ratio: {quote_data["pe_ratio"]}
+            :diamond_shape_with_a_dot_inside: P/E Ratio: {quote_data["pe-ratio"]}
             :money_with_wings: EPS: {quote_data["eps"]}
             """
 
         """Sample crypto data: 
         {
-            'quote_ticker': 'doge-usd', 
-            'type': 'crypto', 
-            'name': 'Dogecoin USD (DOGE-USD)', 
-            'price': '0.143747', 
-            'dollar_change': '+0.008455', 
-            'percent_change': '(+6.25%)', 
-            'open_price': '0.135926', 
-            'days_range': '0.135733 - 0.143970', 
-            '52_week_range': '0.052269 - 0.737567', 
-            'market_cap': '19.071B', 
-            'volume': '1,362,078,720'
+            "52-week-range": "0.070037 - 0.444590", 
+            "_type": "crypto", 
+            "algorithm": "N/A", 
+            "change-dollar": -0.004178, 
+            "change-percent": "(-4.85%)", 
+            "circulating-supply": "132.67B", 
+            "days-range": "0.081641 - 0.088513", 
+            "market-cap": "10.864B", 
+            "max-supply": "N/A", 
+            "name": "Dogecoin USD (DOGE-USD)", 
+            "open": 0.085979, 
+            "previous-close": 0.085979, 
+            "price": 0.081886, 
+            "start-date": "2013-12-15", 
+            "ticker": "DOGE-USD", 
+            "volume": 780823104.0, 
+            "volume-24-hour": "780.82M", 
+            "volume-24-hour-all-currencies": "780.82M"
         }
         """
 
         """Sample stock data:
         {
-            'quote_ticker': 'sklz', 
-            'type': 'stock', 
-            'name': 'Skillz Inc. (SKLZ)', 
-            'price': '3.0700', 
-            'dollar_change': '-0.2700', 
-            'percent_change': '(-8.08%)', 
-            'previous_close_price': '3.3400', 
-            'bid': '3.0500 x 36900', 
-            'ask': '3.4900 x 317700', 
-            'volume': '9,617,138', 
-            'market_cap': '1.258B', 
-            'beta': 'N/A', 
-            'pe_ratio': 'N/A', 
-            'eps': '-0.6930'
+            "1-year-target-est": 69.84, 
+            "52-week-range": "52.28 - 67.20", 
+            "_type": "stock", 
+            "ask": "63.06 x 1800", 
+            "avg-volume": 18895850.0, 
+            "beta": 0.58, 
+            "bid": "63.05 x 1400", 
+            "change-dollar": -0.12, 
+            "change-percent": "(-0.18%)", 
+            "days-range": "62.13 - 63.80", 
+            "earnings-date": "Jul 19, 2022 - Jul 25, 2022", 
+            "eps": 2.37, 
+            "ex-dividend-date": "Jun 14, 2022", 
+            "forward-dividend-and-yield": "1.76 (2.72%)", 
+            "market-cap": "274.256B", 
+            "name": "The Coca-Cola Company (KO)", 
+            "open": 63.42, 
+            "pe-ratio": 26.69, 
+            "previous-close": 63.38, 
+            "price": 63.26, 
+            "ticker": "KO", 
+            "volume": 11517617.0
         }"""
         
         return em

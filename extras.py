@@ -18,6 +18,9 @@ def insensitive_ticker(func):
     async def wrapper(*args, **kwargs):
         output = await func(*args, **kwargs)
         if output.get("error") is not None:
+            # Store the original list of similar tickers if the error is a 404 error
+            if output.get("error_code") == 404:
+                similar_tickers = output.get("similar_tickers")
             # Handle the ticker being an arg
             if kwargs.get("quote_ticker") is None:
                 args = list(args)
@@ -33,6 +36,9 @@ def insensitive_ticker(func):
                 else:
                     kwargs["quote_ticker"] = kwargs["quote_ticker"] + "-USD"
             output = await func(*args, **kwargs)
+            # Update the output with the original list of similar tickers
+            if output.get("error_code") == 404 and similar_tickers != []:
+                output["similar_tickers"] = similar_tickers
         return output
     return wrapper
 

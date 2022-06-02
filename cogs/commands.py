@@ -26,15 +26,31 @@ class Commands(commands.Cog):
         # Simulate the bot typing in case the request takes long
         await ctx.trigger_typing()
 
-        # Convert the arg to uppercase
+        # Convert the arg to uppercase and remove any unnecessary symbols
         quote_ticker = quote_ticker.upper()
+        quote_ticker = quote_ticker.strip("<>()[]{}")
 
         # Fetch quote data
         quote_data = await self.bot.fetch_quote(quote_ticker)
         
         # If the request is invalid, tell the user the quote could not be found
         if quote_data.get("error") is not None:
-            return await ctx.reply(f"I could not find a quote with ticker `{quote_ticker}`.")
+            if quote_data.get("similar_tickers") == []:
+                return await ctx.reply(f"I could not find a quote with ticker `{quote_ticker}`.")
+            else:
+                em = discord.Embed(
+                    title=":question: Quote Not Found",
+                    color=discord.Color.brand_red(),
+                    timestamp=datetime.datetime.now()
+                )
+                desc = f"Could Not Find `{quote_ticker}`\n\n__**Similar Tickers:**__"
+                for count, sim_quote in enumerate(quote_data.get("similar_tickers")):
+                    # If there are more than 5 similar tickers, stop adding them
+                    if count >= 5:
+                        break
+                    desc += f"\n - **Name**: `{sim_quote['name']}`, **Ticker**: `({sim_quote['symbol']})`"
+                em.description = desc
+                return await ctx.send(embeds=[em])
         
         # Prepare and send the emebed card
         em = await self.bot.prepare_card(quote_data)
@@ -50,6 +66,7 @@ class Commands(commands.Cog):
             
             # Format arguments
             quote_ticker = quote_ticker.lower()
+            quote_ticker = quote_ticker.strip("<>()[]{}")
             time_period = time_period.lower()
 
             # Parse time_period input. Set formatting_error to True if there is an
@@ -141,6 +158,10 @@ class Commands(commands.Cog):
         description="Displays a technical analysis chart for the specified ticker symbol."
     )
     async def techchart(self, ctx: commands.Context, ticker: str):
+        # Convert the arg to uppercase and remove any unnecessary symbols
+        ticker = ticker.upper()
+        ticker = ticker.strip("<>()[]{}")
+
         # Generate the embed and send it to the user
         chart_url = f"https://stockcharts.com/c-sc/sc?s={ticker}&p=D&b=5&g=0&i=0&r=1653691828431"
         em = discord.Embed(

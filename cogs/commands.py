@@ -61,7 +61,7 @@ class Commands(commands.Cog):
         name="chart",
         description="Displays a price chart of the specified stock or crypto."
     )
-    async def chart(self, ctx: commands.Context, quote_ticker: str, time_period: str):
+    async def chart(self, ctx: commands.Context, quote_ticker: str, time_period: str="6m"):
         async with ctx.typing(): # Some computations take a long time so make the user believe the bot is typing them out
             
             # Format arguments

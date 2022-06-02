@@ -36,7 +36,11 @@ class Utils(commands.Cog):
                     quote_data = await self.bot.fetch_quote(word.strip("$"))
                     if quote_data != False:
                         await message.reply(embeds=[await self.bot.prepare_card(quote_data)], mention_author=False)
-    
+        # Check if the user mentioned the bot and reply with the prefix
+        if self.bot.user in message.mentions:
+            prefix = (await self.bot.get_prefix(message))[-1]
+            await message.channel.send(f"My prefix is `{prefix}`. Get started by typing `{prefix}help`")
+
     @commands.command()
     async def ping(self, ctx: commands.Context):
         await ctx.send(f"Pong! ({round(self.bot.latency * 1000)} ms)")

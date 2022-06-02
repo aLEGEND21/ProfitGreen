@@ -27,15 +27,16 @@ class Commands(commands.Cog):
         await ctx.trigger_typing()
 
         # Convert the arg to uppercase
-        quote_ticker = quote_ticker.lower()
+        quote_ticker = quote_ticker.upper()
 
         # Fetch quote data
         quote_data = await self.bot.fetch_quote(quote_ticker)
         
         # If the request is invalid, tell the user the quote could not be found
-        if quote_data == False:
+        if quote_data.get("error") is not None:
             return await ctx.reply(f"I could not find a quote with ticker `{quote_ticker}`.")
         
+        # Prepare and send the emebed card
         em = await self.bot.prepare_card(quote_data)
         await ctx.reply(embeds=[em], mention_author=False)
     

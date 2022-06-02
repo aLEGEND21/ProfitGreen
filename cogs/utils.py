@@ -34,7 +34,7 @@ class Utils(commands.Cog):
             for word in words:
                 if "$" in word:
                     quote_data = await self.bot.fetch_quote(word.strip("$"))
-                    if quote_data != False:
+                    if quote_data.get("error") is None:
                         await message.reply(embeds=[await self.bot.prepare_card(quote_data)], mention_author=False)
         # Check if the user mentioned the bot and reply with the prefix
         if self.bot.user in message.mentions:

@@ -17,7 +17,7 @@ def insensitive_ticker(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         output = await func(*args, **kwargs)
-        if output == False:
+        if output.get("error") is not None:
             # Handle the ticker being an arg
             if kwargs.get("quote_ticker") is None:
                 args = list(args)
@@ -61,10 +61,6 @@ class ProfitGreenBot(Bot):
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
             async with session.get(url) as req:
                 output = await req.json()
-        
-        # Return False if the quote couldn't be found
-        if output.get("error") is not None:
-            return False
         
         # Return the data about the quote
         return output

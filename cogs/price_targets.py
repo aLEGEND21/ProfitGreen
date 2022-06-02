@@ -24,7 +24,7 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
         await ctx.trigger_typing()
         # Check that the ticker is a valid ticker
         quote_data = await self.bot.fetch_quote(quote_ticker)
-        if quote_data == False:
+        if quote_data.get("error") is not None:
             return await ctx.send(f"I could not find a quote with ticker `{quote_ticker.upper()}`.")
         
         # Check that the target price is a valid price

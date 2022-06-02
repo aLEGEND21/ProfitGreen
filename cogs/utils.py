@@ -25,6 +25,18 @@ class Utils(commands.Cog):
         except Exception as e:
             print(f"Failed to post server count\n{e.__class__.__name__}: {e}")
     
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        # Respond with the embed card of the quote if a quote is included in the message
+        if "$" in message.content:
+            await message.channel.trigger_typing()
+            words = message.content.split(" ")
+            for word in words:
+                if "$" in word:
+                    quote_data = await self.bot.fetch_quote(word.strip("$"))
+                    if quote_data != False:
+                        await message.reply(embeds=[await self.bot.prepare_card(quote_data)], mention_author=False)
+    
     @commands.command()
     async def ping(self, ctx: commands.Context):
         await ctx.send(f"Pong! ({round(self.bot.latency * 1000)} ms)")

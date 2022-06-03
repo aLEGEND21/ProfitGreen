@@ -18,9 +18,14 @@ class Commands(commands.Cog):
     async def on_ready(self):
         print("cogs.commands is online")
 
+        # Add usage examples
+        self.bot.get_command("quote").usage_examples = ["AAPL", "ETH-USD", "DOGE"]
+        self.bot.get_command("chart").usage_examples = ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
+        self.bot.get_command("techchart").usage_examples = ["AAPL", "BTC-USD", "TSLA"]
+
     @commands.command(
         name="quote",
-        description="Get a detailed message containing information about a stock or crypto."
+        description="Get a detailed message containing information about a stock or crypto.",
     )
     async def quote(self, ctx: commands.Context, quote_ticker: str):
         # Simulate the bot typing in case the request takes long
@@ -59,7 +64,7 @@ class Commands(commands.Cog):
     # Commands that have not been completed yet
     @commands.command(
         name="chart",
-        description="Displays a price chart of the specified stock or crypto."
+        description="Displays a price chart of the specified stock or crypto.",
     )
     async def chart(self, ctx: commands.Context, quote_ticker: str, time_period: str="6m"):
         async with ctx.typing(): # Some computations take a long time so make the user believe the bot is typing them out
@@ -155,12 +160,16 @@ class Commands(commands.Cog):
     
     @commands.command(
         name="techchart",
-        description="Displays a technical analysis chart for the specified ticker symbol."
+        description="Displays a technical analysis chart for the specified ticker symbol.",
     )
     async def techchart(self, ctx: commands.Context, ticker: str):
         # Convert the arg to uppercase and remove any unnecessary symbols
         ticker = ticker.upper()
         ticker = ticker.strip("<>()[]{}")
+
+        # Tell the user that crypto is not supported if they specify a crypto
+        if "-" in ticker:
+            return await ctx.reply("Sorry, crypto is not yet supported for this command.")
 
         # Generate the embed and send it to the user
         chart_url = f"https://stockcharts.com/c-sc/sc?s={ticker}&p=D&b=5&g=0&i=0&r=1653691828431"

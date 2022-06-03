@@ -21,7 +21,7 @@ class Commands(commands.Cog):
         # Add usage examples
         self.bot.get_command("quote").usage_examples = ["AAPL", "ETH-USD", "DOGE"]
         self.bot.get_command("chart").usage_examples = ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
-        self.bot.get_command("techchart").usage_examples = ["AAPL", "BTC-USD", "TSLA"]
+        self.bot.get_command("techchart").usage_examples = ["AAPL", "MSFT", "TSLA"]
 
     @commands.command(
         name="quote",

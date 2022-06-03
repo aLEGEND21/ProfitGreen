@@ -98,7 +98,33 @@ class Commands(commands.Cog):
             
             # Send a message and return if there was a formatting error
             if formatting_error:
-                return await ctx.send(f"Please use valid formatting. Ex: ,chart GME 15d OR ,chart amc 4m")
+                indent = "\u200b " * 4
+                
+                # Generate the valid command usage. If the bot has just been started, ctx.command will
+                # not have the usage_examles attribute which is why we check for it with hasattr().
+                usage_examples_text = ""
+                if hasattr(ctx.command, "usage_examples"):
+                    usage_examples_text = "\nHere are some examples of valid command usage:\n"
+                    for ex in ctx.command.usage_examples:
+                        usage_examples_text += f"{indent}- `{ctx.prefix}{ctx.command.name} {ex}`\n"
+                
+                # Create the embed
+                em = discord.Embed(
+                    title=":x: Invalid Time Period",
+                    description=f"""
+                    Please provide valid formatting for the time period argument.
+
+                    The time period must be formatted as follows: `<number><time_period_type>`.
+                    The number must be a valid number. The time period type must be one of the following:
+                    {indent}- `d` for days
+                    {indent}- `m` for months
+                    {indent}- `y` for years
+                    {usage_examples_text}
+                    Type `{ctx.prefix}help chart` for more information.
+                    """,
+                    color=discord.Color.red()
+                )
+                return await ctx.reply(embeds=[em])
             
             # Prevent the user from supplying less than 7 days to prevent the chart from having too
             # few data points. Also prevent the user from supplying a date farther back than Jan 1, 1970

@@ -10,6 +10,9 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
 
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
+
+        # Cog data
+        self.emoji = ":dart:"
     
     @commands.Cog.listener()
     async def on_ready(self):

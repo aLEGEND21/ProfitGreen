@@ -8,13 +8,16 @@ import topgg
 from extras import *
 
 
-class Utils(commands.Cog):
+class Utils(commands.Cog, name="Utility Commands"):
 
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
         self.bot.topggpy = topgg.DBLClient(bot, bot.topgg_token)
 
         self.update_stats.start()
+
+        # Cog data
+        self.emoji = ":gear:"
     
     @tasks.loop(minutes=30)
     async def update_stats(self):

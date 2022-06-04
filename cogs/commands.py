@@ -9,10 +9,13 @@ from matplotlib import dates as mdates
 from extras import *
 
 
-class Commands(commands.Cog):
+class Commands(commands.Cog, name="General Commands"):
 
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
+
+        # Cog data
+        self.emoji = ":hash:"
 
     @commands.Cog.listener()
     async def on_ready(self):

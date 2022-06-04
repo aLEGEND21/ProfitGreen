@@ -47,6 +47,12 @@ class ProfitGreenBot(Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Bot settings
+        self._emojis = {
+            "profitgreen": "<:profitgreen:982696451924709436>"
+        }
+        self.green = discord.Color.from_rgb(38, 186, 156)
     
     @insensitive_ticker
     async def fetch_quote(self, quote_ticker: str):

@@ -73,7 +73,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         em = discord.Embed(
             title=f":notebook: Command Help: `{command.name}`",
             description=f"""
-            **Description** :notebook:
+            **Description** :notepad_spiral:
             {command.description if command.description != "" else "No description available"}
 
             **Aliases** :name_badge:

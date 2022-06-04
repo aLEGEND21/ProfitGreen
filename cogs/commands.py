@@ -22,13 +22,17 @@ class Commands(commands.Cog, name="General Commands"):
         print("cogs.commands is online")
 
         # Add usage examples
-        self.bot.get_command("quote").usage_examples = ["AAPL", "ETH-USD", "DOGE"]
+        # OLD - No longer in use due to Command.extras being discovered
+        '''self.bot.get_command("quote").usage_examples = ["AAPL", "ETH-USD", "DOGE"]
         self.bot.get_command("chart").usage_examples = ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
-        self.bot.get_command("techchart").usage_examples = ["AAPL", "MSFT", "TSLA"]
+        self.bot.get_command("techchart").usage_examples = ["AAPL", "MSFT", "TSLA"]'''
 
     @commands.command(
         name="quote",
         description="Get a detailed message containing information about a stock or crypto.",
+        extras={
+            "usage_examples": ["AAPL", "ETH-USD", "DOGE"]
+        }
     )
     async def quote(self, ctx: commands.Context, quote_ticker: str):
         # Simulate the bot typing in case the request takes long
@@ -68,6 +72,9 @@ class Commands(commands.Cog, name="General Commands"):
     @commands.command(
         name="chart",
         description="Displays a price chart of the specified stock or crypto.",
+        extras={
+            "usage_examples": ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
+        }
     )
     async def chart(self, ctx: commands.Context, quote_ticker: str, time_period: str="6m"):
         async with ctx.typing(): # Some computations take a long time so make the user believe the bot is typing them out
@@ -190,6 +197,9 @@ class Commands(commands.Cog, name="General Commands"):
     @commands.command(
         name="techchart",
         description="Displays a technical analysis chart for the specified ticker symbol.",
+        extras={
+            "usage_examples": ["AAPL", "MSFT", "TSLA"]
+        }
     )
     async def techchart(self, ctx: commands.Context, ticker: str):
         # Convert the arg to uppercase and remove any unnecessary symbols

@@ -70,13 +70,23 @@ class ErrorHandler(commands.Cog):
         # Handle all the errors caused by prefixed commands
         elif isinstance(error, commands.MissingRequiredArgument):
             # Show a detailed error message if the command has a usage_examples attribute
-            if getattr(ctx.command, "usage_examples", None) is not None:
+            # OLD system of showing usage examples
+            '''if getattr(ctx.command, "usage_examples", None) is not None:
                 em = discord.Embed(
                     title=f":package: Missing Required Argument: `{error.param.name}`",
                     description=f":notepad_spiral: __**Command Description:**__\n{ctx.command.description}\n\n:microphone2: __**Example Usage:**__\n",
                     color=discord.Color.red(),
                 )
                 for ex in ctx.command.usage_examples:
+                    em.description += f"`{ctx.prefix}{ctx.command.name} {ex}`\n"
+                await ctx.reply(embeds=[em])'''
+            if ctx.command.extras.get("usage_examples") is not None:
+                em = discord.Embed(
+                    title=f":package: Missing Required Argument: `{error.param.name}`",
+                    description=f":notepad_spiral: __**Command Description:**__\n{ctx.command.description}\n\n:microphone2: __**Example Usage:**__\n",
+                    color=discord.Color.red(),
+                )
+                for ex in ctx.command.extras.get("usage_examples"):
                     em.description += f"`{ctx.prefix}{ctx.command.name} {ex}`\n"
                 await ctx.reply(embeds=[em])
             else:

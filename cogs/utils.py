@@ -49,6 +49,48 @@ class Utils(commands.Cog, name="Utility Commands"):
     )
     async def ping(self, ctx: commands.Context):
         await ctx.send(f"Pong! ({round(self.bot.latency * 1000)} ms)")
+    
+    @commands.command(
+        name="feedback",
+        brief="Send feedback to the bot owner",
+        description="Displays a form in which you can provide detailed feedback on what you didn't like, what you think needs improvement, what you liked etc. Any feedback is greatly appreciated!"
+    )
+    async def feedback(self, ctx: commands.Context):
+        # Create and configure the modal
+        async def modal_callback(interaction: discord.Interaction):
+            em.description = ":heart: Thank you for your feedback!"
+            em.color = self.bot.green
+            await interaction.response.send_message(embeds=[em])
+            log_em = discord.Embed(
+                title=f":speaking_head: Feedback From `{interaction.user}`",
+                description=f"{modal.children[0].value}",
+                color=self.bot.green,
+                timestamp=datetime.datetime.now()
+            )
+            log_em.set_footer(text="Sent by {}".format(ctx.author), icon_url=ctx.author.avatar.url)
+            log_channel = self.bot.get_channel(self.bot.log_channels[0])
+            await log_channel.send(embeds=[log_em])
+        modal = discord.ui.Modal("ProfitGreen Feedback")
+        modal.add_item(
+            discord.ui.InputText(
+                style=discord.InputTextStyle.long,
+                label="What feedback do you have?",
+                required=True
+            )
+        )
+        modal.callback = modal_callback
+        
+        # Create the view and add the button which will trigger the modal
+        view = discord.ui.View()
+        btn = discord.ui.Button(style=discord.ButtonStyle.primary, label="Show Form")
+        async def btn_callback(interaction: discord.Interaction):
+            await interaction.response.send_modal(modal)
+        btn.callback = btn_callback
+        view.add_item(btn)
+
+        # Create and send the embed with the view
+        em = discord.Embed(description=":mouse_three_button: Click the button below to display the feedback form.", color=discord.Color.blurple())
+        await ctx.reply(embeds=[em], view=view)
 
 def setup(bot):
     bot.add_cog(Utils(bot))

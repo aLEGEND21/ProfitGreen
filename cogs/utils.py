@@ -42,7 +42,7 @@ class Utils(commands.Cog, name="Utility Commands"):
         # Check if the user mentioned the bot and reply with the prefix
         if self.bot.user in message.mentions:
             prefix = (await self.bot.get_prefix(message))[-1]
-            await message.channel.send(f"My prefix is `{prefix}`. Get started by typing `{prefix}help`")
+            await message.channel.send(f"My prefix is `{prefix} (Comma)`. Get started by typing `{prefix}help`")
 
     @commands.command(
         brief="Gets the latency of the bot"

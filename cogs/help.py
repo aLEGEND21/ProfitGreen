@@ -56,7 +56,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
                 desc += f"{indent}`{cmd.name}` `{spacing}` *{cmd.short_doc}*\n" if cmd.short_doc != "" else f"{indent}`{cmd.name}`\n"
             desc += "\n"
         desc += f"*Type `{self.context.prefix}help <command>` for more info on a command*" # Add footer to description
-        print(desc)
+        
         # Create the embed using the data generated above
         em = discord.Embed(
             title=f"ProfitGreen Bot Commands",

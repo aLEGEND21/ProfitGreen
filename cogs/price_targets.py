@@ -20,7 +20,8 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
     
     @commands.command(
         name="addpricetarget",
-        description="Add a new price target. When the selected quote reaches that price target, you will be notified.",
+        brief="Adds a new price target",
+        description="Add a new price target. When the selected quote reaches that price target, you will be notified. In order to get notified, make sure your DMs are enabled so that the bot can DM you.",
         aliases=["addpt", "apt"]
     )
     async def add_price_target(self, ctx: commands.Context, quote_ticker: str, target_price: str):
@@ -52,6 +53,7 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
 
     @commands.command(
         name="removepricetarget",
+        brief="Removes a price target",
         description="Remove a price target you previously set.",
         aliases=["removept", "rpt", "deletepricetarget", "deletept", "delpt", "dpt"]
     )
@@ -76,7 +78,8 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
 
     @commands.command(
         name="pricetargets",
-        description="View all price targets that you have set.",
+        brief="Lists all your price targets",
+        description="View all price targets that you have set. Price targets that have reached their target price will not be displayed.",
         aliases=["pricetarget", "pt"]
     )
     async def pricetargets(self, ctx: commands.Context):

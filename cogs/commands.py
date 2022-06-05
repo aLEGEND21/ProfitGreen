@@ -29,6 +29,7 @@ class Commands(commands.Cog, name="General Commands"):
 
     @commands.command(
         name="quote",
+        brief="Shows current data about a ticker",
         description="Get a detailed message containing information about a stock or crypto.",
         extras={
             "usage_examples": ["AAPL", "ETH-USD", "DOGE"]
@@ -71,6 +72,7 @@ class Commands(commands.Cog, name="General Commands"):
     # Commands that have not been completed yet
     @commands.command(
         name="chart",
+        brief="Displays a price chart for a ticker",
         description="Displays a price chart of the specified stock or crypto.",
         extras={
             "usage_examples": ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
@@ -196,6 +198,7 @@ class Commands(commands.Cog, name="General Commands"):
     
     @commands.command(
         name="techchart",
+        brief="Displays a technical analysis chart",
         description="Displays a technical analysis chart for the specified ticker symbol.",
         extras={
             "usage_examples": ["AAPL", "MSFT", "TSLA"]

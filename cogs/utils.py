@@ -44,7 +44,9 @@ class Utils(commands.Cog, name="Utility Commands"):
             prefix = (await self.bot.get_prefix(message))[-1]
             await message.channel.send(f"My prefix is `{prefix}`. Get started by typing `{prefix}help`")
 
-    @commands.command()
+    @commands.command(
+        brief="Gets the latency of the bot"
+    )
     async def ping(self, ctx: commands.Context):
         await ctx.send(f"Pong! ({round(self.bot.latency * 1000)} ms)")
 

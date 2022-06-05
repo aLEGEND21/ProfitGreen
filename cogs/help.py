@@ -23,6 +23,15 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         super().__init__(*args, **kwargs)
     
     async def send_bot_help(self, mapping: dict):
+        # Figure out how much the spacing should be between the commands and the description
+        max_len = 0
+        for cmd in self.context.bot.commands:
+            if cmd.hidden:
+                continue 
+            if len(cmd.name) > max_len:
+                max_len = len(cmd.name)
+        max_len += 2
+
         # Generate the embed description from the mapping object
         desc = ""
         indent = "\u200b " * 6
@@ -35,17 +44,19 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
                 emoji = cog.emoji + " "
             else:
                 emoji = "\u200b"
-            # Set cog title and loop through all the commands in the cog
+            # Set cog title
             desc += f"{emoji}**{cog.qualified_name}:**\n" if cog is not None else ":notepad_spiral: **Uncategorized Commands:**\n"
             for cmd in mapping[cog]:
                 # Skip over hidden commands
                 if cmd.hidden:
                     continue
+                # Set the amount of spacing between the command and the short_docs
+                spacing = "." * (max_len - len(cmd.name)) # Use periods because \u200b has variable width which messes up the spacing
                 # Add the command to the embed description
-                desc += f"{indent}`{cmd.name}`{indent*2}*{cmd.short_doc}*\n" if cmd.short_doc != "" else f"{indent}`{cmd.name}`\n"
+                desc += f"{indent}`{cmd.name}` `{spacing}` *{cmd.short_doc}*\n" if cmd.short_doc != "" else f"{indent}`{cmd.name}`\n"
             desc += "\n"
         desc += f"*Type `{self.context.prefix}help <command>` for more info on a command*" # Add footer to description
-
+        print(desc)
         # Create the embed using the data generated above
         em = discord.Embed(
             title=f"ProfitGreen Bot Commands",
@@ -55,6 +66,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         )
 
         await self.context.send(embeds=[em])
+        commands.DefaultHelpCommand
     
     async def send_command_help(self, command: commands.Command):
         # Create something showing proper command usage from the usage examples

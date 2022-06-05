@@ -70,7 +70,7 @@ class Utils(commands.Cog, name="Utility Commands"):
             log_em.set_footer(text="Sent by {}".format(ctx.author), icon_url=ctx.author.avatar.url)
             log_channel = self.bot.get_channel(self.bot.log_channels[0])
             await log_channel.send(embeds=[log_em])
-        modal = discord.ui.Modal("ProfitGreen Feedback")
+        modal = discord.ui.Modal(title="ProfitGreen Feedback")
         modal.add_item(
             discord.ui.InputText(
                 style=discord.InputTextStyle.long,

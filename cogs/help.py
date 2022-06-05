@@ -66,7 +66,6 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         )
 
         await self.context.send(embeds=[em])
-        commands.DefaultHelpCommand
     
     async def send_command_help(self, command: commands.Command):
         # Create something showing proper command usage from the usage examples
@@ -80,13 +79,21 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
             aliases = aliases[:-2]
         else:
             aliases = "No Aliases Available"
+        
+        # Set the command description
+        if command.description != "":
+            cmd_desc = command.description
+        elif command.brief != "":
+            cmd_desc = command.brief
+        else:
+            cmd_desc = "No description available"
 
         # Generate the embed
         em = discord.Embed(
             title=f":notebook: Command Help: `{command.name}`",
             description=f"""
             **Description** :notepad_spiral:
-            {command.description if command.description != "" else "No description available"}
+            {cmd_desc}
 
             **Aliases** :name_badge:
             {aliases}

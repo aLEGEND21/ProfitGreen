@@ -1,7 +1,9 @@
 aiohttp==3.7.4.post0
 beautifulsoup4==4.11.1
-py-cord==2.0.0rc1
+cnbcfinance==0.0.4
 Flask==2.0.2
 matplotlib==3.5.1
+motor==3.0.0
+py-cord==2.0.0rc1
 python-dotenv==0.20.0
 topggpy==1.4.0

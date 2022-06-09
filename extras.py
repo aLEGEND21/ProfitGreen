@@ -2,13 +2,19 @@ import discord
 from discord.ext.commands import Bot
 
 import aiohttp
+import asyncio
 import datetime
 import csv
 import asyncio
 import sqlite3
 import functools
+import ssl
+import cnbcfinance
+import motor.motor_asyncio
 from bs4 import BeautifulSoup
 from decimal import Decimal
+
+from config import Config
 
 
 def insensitive_ticker(func):
@@ -48,11 +54,60 @@ class ProfitGreenBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Connect to the database
+        self.db_client = motor.motor_asyncio.AsyncIOMotorClient(Config.DB_CONNECTION_STRING)
+        self.db: motor.motor_asyncio.AsyncIOMotorDatabase = self.db_client["ProfitGreen"]
+        self.portfolio: motor.motor_asyncio.AsyncIOMotorCollection = self.db["Portfolio"]
+
         # Bot settings
         self._emojis = {
             "profitgreen": "<:profitgreen:982696451924709436>"
         }
         self.green = discord.Color.from_rgb(38, 186, 156)
+    
+    async def fetch_portfolio(self, user_id: int):
+        # Get the user's portfolio
+        cursor = self.portfolio.find({"_id": user_id})
+        for doc in await cursor.to_list(100):
+            if doc.get("_id") == user_id:
+                return doc
+        return None
+    
+    @insensitive_ticker
+    async def cnbc_data(self, ticker: str):
+        """Fetches the price of a stock or cryptocurrency from CNBC Finance's API. This should
+        be used as a fast alternative to fetch_quote in order to get ONLY the price of a ticker.
+
+        Args:
+            ticker (str): The ticker of the stock or cryptocurrency to fetch the price of.
+
+        Returns:
+            dict: A dict containing the price or an error code.
+        """
+        # The function that will preform the synchronous request to the API
+        def sync_request(ticker: str):
+            quote_object = cnbcfinance.Cnbc(ticker)
+            result = quote_object.get_quote()
+            if result.get("last") is None:
+                result = {"error_code": 404}
+            else:
+                result = {
+                    "_type": result["assetType"].lower(),
+                    "change": result["change"],
+                    "change_pct": result["change_pct"],
+                    "name": result["name"],
+                    "open": float(result["open"]),
+                    "price": float(result.get("last")),
+                    "ticker": ticker
+                }
+            return result
+        # We need to run the event loop in the executor in order to make this a non-blocking sync function
+        # This way, other commands can still run while the data is being fetched, however the original
+        # command will wait for this to finish
+        loop = asyncio.get_event_loop()
+        output = await loop.run_in_executor(None, sync_request, ticker)
+        return output
+        # TODO: Make this run fetch_quote if the ticker is a crypto
     
     @insensitive_ticker
     async def fetch_quote(self, quote_ticker: str):
@@ -370,3 +425,24 @@ class TasksDataBase:
                 user_price_targets.append(pt)
 
         return user_price_targets
+
+
+class ConfirmationView(discord.ui.View):
+
+    def __init__(self, _on_timeout, on_confirm, on_cancel, timeout: int = 180):
+        super().__init__(timeout=timeout)
+        self._on_timeout = _on_timeout
+        self.on_confirm = on_confirm
+        self.on_cancel = on_cancel
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
+    async def confirm(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        await self.on_confirm(btn, interaction)
+    
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
+    async def cancel(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        await self.on_cancel(btn, interaction)
+    
+    async def on_timeout(self):
+        self.clear_items()
+        await self._on_timeout()

@@ -184,6 +184,9 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         name="buy",
         brief="Buy a quote",
         description="Buy more shares of a quote for your portfolio. If you want to buy multiple shares at a time, supply the number of shares you wish to buy for the `quantity` parameter.",
+        extras={
+            "usage_examples": ["AAPL", "XLE 5", "MSFT 23"]
+        }
     )
     async def buy(self, ctx: commands.Context, ticker: str, quantity: str = "1"):
         # TODO: Limit the number of quotes that people can buy to a maximum of 24
@@ -213,7 +216,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         
         # Check if the user has enough money to buy the stock
         if total > balance:
-            return await ctx.send("Not enough money") # TODO: Improve the error message
+            return await ctx.send(":x: You don't have enough money to place this order.")
         
         # Generate the embed containing the order information
         em = discord.Embed(
@@ -300,6 +303,9 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         name="sell",
         brief="Sell a quote",
         description="Sell a quote from your portfolio. You can sell multiples shares at a time by providing the number of shares you wish to sell for the `quantity` parameter.",
+        extras={
+            "usage_examples": ["AMZN", "XLE 15", "TSLA 234"]
+        }
     )
     async def sell(self, ctx: commands.Context, ticker: str, quantity: str = "1"):
         # Format variables

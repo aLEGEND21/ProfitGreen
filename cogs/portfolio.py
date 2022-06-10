@@ -223,7 +223,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             title=f"BUY Order Summary for `{ticker}`",
             description=f"""
             :bar_chart: Current Price: `${self.commify(price)}`
-            :scales: Quantity: `{quantity}`
+            :scales: Quantity: `{self.commify(quantity)}`
             :money_with_wings: Total Order Cost: `${self.commify(total)}`
             :moneybag: Current Cash Balance: `${self.commify(balance)}`
             :gem: Ending Cash Balance: `${self.commify(round(balance - total, 3))}`
@@ -348,7 +348,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             title=f"SELL Order Summary for `{ticker}`",
             description=f"""
             :bar_chart: Current Price: `${self.commify(price)}`
-            :scales: Quantity: `{quantity}`
+            :scales: Quantity: `{self.commify(quantity)}`
             :money_with_wings: Total Order Value: `${self.commify(total)}`
             :moneybag: Current Cash Balance: `${self.commify(balance)}`
             :gem: Ending Cash Balance: `${self.commify(round(balance + total, 3))}`

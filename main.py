@@ -1,5 +1,6 @@
 # Make sure py-cord is installed
 import os
+os.system("pip uninstall py-cord")
 os.system("pip install py-cord==2.0.0rc1")
 
 # Imports

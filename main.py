@@ -1,8 +1,10 @@
+# Make sure py-cord is installed
+import os
+os.system("pip install py-cord==2.0.0rc1")
+
 # Imports
 import discord
 from discord.ext import commands
-
-import os
 
 from config import Config
 from extras import *

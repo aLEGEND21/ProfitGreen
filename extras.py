@@ -437,10 +437,12 @@ class ConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        self.stop()
         await self.on_confirm(btn, interaction)
     
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
     async def cancel(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        self.stop()
         await self.on_cancel(btn, interaction)
     
     async def on_timeout(self):

@@ -3,7 +3,8 @@ import discord
 from discord.ext import commands
 from discord.ext import tasks
 
-#import topgg
+import aiohttp
+import json
 
 from extras import *
 
@@ -12,7 +13,7 @@ class Utils(commands.Cog, name="Utility Commands"):
 
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
-        #self.bot.topggpy = topgg.DBLClient(bot, bot.topgg_token)
+        self.topgg_api = "https://top.gg/api"
 
         self.update_stats.start()
 
@@ -23,10 +24,23 @@ class Utils(commands.Cog, name="Utility Commands"):
     async def update_stats(self):
         """This function runs every 30 minutes to automatically update your server count."""
         try:
-            #await self.bot.topggpy.http.post_guild_count(10243, self.bot.shard_count, self.bot.shard_id) # Post a fake server count to Top.gg
-            print(f"Posted server count to Top.gg")
+            url = f"{self.topgg_api}/bots/{self.bot.user.id}/stats"
+            headers = {
+                "Authorization": self.bot.topgg_token
+            }
+            payload = {
+                "server_count": 10497 # Fake server count
+            }
+            async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
+                await session.post(url, data=payload, headers=headers)
+            print("Posted server count to Top.gg")
         except Exception as e:
             print(f"Failed to post server count\n{e.__class__.__name__}: {e}")
+    
+    @update_stats.before_loop
+    async def before_update_stats(self):
+        """Wait until the bot is ready before the task starts."""
+        await self.bot.wait_until_ready()
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

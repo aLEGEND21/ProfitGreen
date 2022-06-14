@@ -41,6 +41,8 @@ bot.log_channels = [941105200586952735, # #logging
 @bot.event
 async def on_ready():
     print("Logged in as {}.".format(bot.user))
+    
+    # Display the server count
     print()
     print(f"Server Data ({len(bot.guilds)}):")
     for guild in bot.guilds:
@@ -52,6 +54,10 @@ async def on_ready():
                 mem_ct += 1
         print(f"Guild Name: {guild}, Member Count: {guild.member_count}, Human Count: {mem_ct}, Bot Count: {guild.member_count - mem_ct}")
     print()
+
+    # Update the bot's status
+    activity = discord.Activity(name=",help | The Stock Market", type=discord.ActivityType.watching)
+    await bot.change_presence(status=discord.Status.online, activity=activity)
 
 
 # Load all cogs on bot startup

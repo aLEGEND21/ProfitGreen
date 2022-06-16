@@ -17,4 +17,5 @@ class Config:
     PREFIX = os.getenv('PREFIX')
     TOPGG_TOKEN = os.getenv('TOPGG_TOKEN')
     PRODUCTION = ast.literal_eval(os.getenv('PRODUCTION'))
+    PORT = int(os.getenv('PORT'))
     DB_CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')

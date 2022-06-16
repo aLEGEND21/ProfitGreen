@@ -33,7 +33,7 @@ def topgg_webhook():
     return request.json
 
 def run():
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=Config.PORT)
 
 def run_server_thread():
     if Config.PRODUCTION == True:

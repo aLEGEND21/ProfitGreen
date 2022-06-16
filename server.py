@@ -12,6 +12,6 @@ def run():
     app.run(host="0.0.0.0")
 
 def run_server_thread():
-    t = Thread(target=run)
-    if Config.RUN_SERVER == "True":
+    if Config.PRODUCTION == True:
+        t = Thread(target=run)
         t.start()

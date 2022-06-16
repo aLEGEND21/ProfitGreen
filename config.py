@@ -1,4 +1,5 @@
 import os
+import ast
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -15,5 +16,5 @@ class Config:
     TOKEN = os.getenv('TOKEN')
     PREFIX = os.getenv('PREFIX')
     TOPGG_TOKEN = os.getenv('TOPGG_TOKEN')
-    RUN_SERVER = os.getenv('RUN_SERVER')
+    PRODUCTION = ast.literal_eval(os.getenv('PRODUCTION'))
     DB_CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')

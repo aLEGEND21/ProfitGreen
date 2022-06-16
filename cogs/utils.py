@@ -91,6 +91,15 @@ class Utils(commands.Cog, name="Utility Commands"):
                 await user.send(embeds=[em])
             except discord.errors.Forbidden: # User has DMs disabled
                 pass
+            # Log the vote in the bot's log channel
+            if user.id != self.bot.owner_id:
+                log_em = discord.Embed(
+                    title=f":gem: `{user.name}#{user.discriminator}` Just Voted!",
+                    timestamp=datetime.datetime.now(),
+                    color=self.bot.green
+                )
+                log_channel = self.bot.get_channel(self.bot.log_channels[0])
+                await log_channel.send(embeds=[log_em])
 
     @parse_votes.before_loop
     async def before_parse_votes(self):

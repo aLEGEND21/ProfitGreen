@@ -11,7 +11,6 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
-        self.portfolio_starting_value = 100000
 
         # Cog data
         self.emoji = ":dollar:"
@@ -22,15 +21,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
     async def cog_before_invoke(self, ctx: commands.Context):
         # Make the user an account in the database if they don't have an account in the portfolio collection
-        if await self.bot.fetch_portfolio(ctx.author.id) is None:
-            await self.bot.portfolio.insert_one(
-                {
-                    "_id": ctx.author.id,
-                    "username": f"{ctx.author.name}#{ctx.author.discriminator}",
-                    "balance": self.portfolio_starting_value,
-                    "portfolio": []
-                },
-            )
+        await self.bot.create_portfolio(ctx.author)
     
     def commify(self, n):
         """Adds commas to a number and returns it as a string.

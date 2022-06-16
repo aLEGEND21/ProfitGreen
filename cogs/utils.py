@@ -5,8 +5,11 @@ from discord.ext import tasks
 
 import aiohttp
 import json
+import random
+import datetime
 
 from extras import *
+from config import Config
 
 
 class Utils(commands.Cog, name="Utility Commands"):
@@ -15,7 +18,9 @@ class Utils(commands.Cog, name="Utility Commands"):
         self.bot: ProfitGreenBot = bot
         self.topgg_api = "https://top.gg/api"
 
-        self.update_stats.start()
+        if Config.PRODUCTION:
+            self.update_stats.start()
+            self.parse_votes.start()
 
         # Cog data
         self.emoji = ":gear:"
@@ -40,6 +45,55 @@ class Utils(commands.Cog, name="Utility Commands"):
     @update_stats.before_loop
     async def before_update_stats(self):
         """Wait until the bot is ready before the task starts."""
+        await self.bot.wait_until_ready()
+    
+    @tasks.loop(seconds=5)
+    async def parse_votes(self):
+        # Fetch all the upvotes from the tasks collection
+        cursor = self.bot.tasks.find({"_type": "upvote"})
+        for vote in await cursor.to_list(length=None):
+            # Fetch the user and create a portfolio for them if they don't have one
+            user = await self.bot.fetch_user(vote["user"])
+            await self.bot.create_portfolio(user)
+            await self.bot.tasks.delete_one(vote) # Remove the vote task
+            # Fetch the stock and calculate the data associated with it
+            stock = random.choice(self.bot.reward_stocks)
+            stock_data = await self.bot.cnbc_data(stock)
+            price = stock_data["price"]
+            shares = random.randint(15, 25)
+            total = round(price * shares, 2)
+            # Add the stock to the user's portfolio
+            portfolio = await self.bot.fetch_portfolio(user.id)
+            for i, q in enumerate(portfolio["portfolio"]):
+                if q["ticker"] == stock:
+                    portfolio["portfolio"][i]["buy_price"] = round((q["buy_price"] * q["quantity"] + total) / (q["quantity"] + shares), 2)
+                    portfolio["portfolio"][i]["quantity"] += shares
+                    break
+            else:
+                portfolio["portfolio"].append({
+                    "ticker": stock,
+                    "quantity": shares,
+                    "buy_price": price
+                })
+            await self.bot.portfolio.update_one({"_id": user.id}, {"$set": portfolio})
+            # Notify the user
+            em = discord.Embed(
+                title=":gem: Here is Your Vote Reward!",
+                description=f"""
+                Hey `{user.name}`, you just recieved `{shares}` shares of `{stock}` worth `${total}`!
+
+                :heart: Thanks for voting!
+                """,
+                timestamp=datetime.datetime.now(),
+                color=self.bot.green
+            )
+            try:
+                await user.send(embeds=[em])
+            except discord.errors.Forbidden: # User has DMs disabled
+                pass
+
+    @parse_votes.before_loop
+    async def before_parse_votes(self):
         await self.bot.wait_until_ready()
     
     @commands.Cog.listener()

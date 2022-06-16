@@ -58,12 +58,27 @@ class ProfitGreenBot(Bot):
         self.db_client = motor.motor_asyncio.AsyncIOMotorClient(Config.DB_CONNECTION_STRING)
         self.db: motor.motor_asyncio.AsyncIOMotorDatabase = self.db_client["ProfitGreen"]
         self.portfolio: motor.motor_asyncio.AsyncIOMotorCollection = self.db["Portfolio"]
+        self.tasks: motor.motor_asyncio.AsyncIOMotorCollection = self.db["Tasks"]
 
         # Bot settings
         self._emojis = {
             "profitgreen": "<:profitgreen:982696451924709436>"
         }
         self.green = discord.Color.from_rgb(38, 186, 156)
+        self.portfolio_starting_value = 100000
+        self.reward_stocks = ["META", "AMZN", "AAPL", "NFLX", "MSFT"]
+    
+    async def create_portfolio(self, user: discord.User):
+        if await self.fetch_portfolio(user.id) is None:
+            user = await self.fetch_user(user.id)
+            await self.portfolio.insert_one(
+                {
+                    "_id": user.id,
+                    "username": f"{user.name}#{user.discriminator}",
+                    "balance": self.portfolio_starting_value,
+                    "portfolio": []
+                },
+            )
     
     async def fetch_portfolio(self, user_id: int):
         # Get the user's portfolio

@@ -22,20 +22,18 @@ class TaskManager(commands.Cog):
     # Create a task to check the database and see if price targets have been reached
     @tasks.loop(minutes=5)
     async def check_price_targets(self):
-        db = TasksDataBase()
-        price_targets = db.get_all_price_targets()
-        db.disconnect()
+        cursor = self.bot.tasks.find({"_type": "price_alert"})
 
         # Loop through each price target searching for ones that have been reached
-        for pt in price_targets:
-            quote_data = await self.bot.fetch_quote(pt[1])
+        for pt in await cursor.to_list(length=None):
+            quote_data = await self.bot.fetch_quote(pt["quote_ticker"])
 
-            if float(quote_data["price"]) > pt[2]:
+            if float(quote_data["price"]) > pt["target_price"]:
                 # Fetch the user and generate the embed
-                user = await self.bot.fetch_user(pt[0])
+                user = await self.bot.fetch_user(pt["user_id"])
                 em = discord.Embed(
                     title=":dart: Price Target Reached",
-                    description=f"**`{pt[1]}`** Reached A Price Target of **`${pt[2]}`**",
+                    description=f"**`{pt['quote_ticker']}`** Reached A Price Target of **`${pt['target_price']}`**",
                     color=discord.Color.green(),
                     timestamp=datetime.datetime.now()
                 )
@@ -44,9 +42,11 @@ class TaskManager(commands.Cog):
                 # raised, then do not delete the price target
                 try:
                     await user.send(embeds=[em])
-                    db = TasksDataBase()
-                    db.remove_price_target(user.id, pt[1]) # Delete the price target since the user was notified
-                    db.disconnect()
+                    await self.bot.tasks.delete_one(
+                        {
+                            "_id": pt["_id"],
+                        }
+                    )
                 except discord.Forbidden:
                     print(f"Unable to notify {user.name}#{user.discriminator} about price target on {pt[1]} for ${pt[2]} (403 Forbidden).")
             

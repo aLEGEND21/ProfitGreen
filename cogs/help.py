@@ -65,7 +65,23 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
             timestamp=datetime.datetime.now()
         )
 
-        await self.context.send(embeds=[em])
+        # Create the view containing buttons for different functions
+        view = discord.ui.View(
+            discord.ui.Button(
+                label="Support",
+                url="https://discord.gg/xBSBYk5Adj"
+            ),
+            discord.ui.Button(
+                label="Invite",
+                url=f"https://top.gg/bot/{self.context.bot.user.id}/invite"
+            ),
+            discord.ui.Button(
+                label="Vote",
+                url=f"https://top.gg/bot/{self.context.bot.user.id}/vote"
+            )
+        )
+
+        await self.context.send(embeds=[em], view=view)
     
     async def send_command_help(self, command: commands.Command):
         # Create something showing proper command usage from the usage examples

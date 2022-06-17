@@ -411,7 +411,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
     @commands.command(
         name="freestock",
         brief="Claim free shares of a random stock",
-        description="If you vote for the bot on Top.gg, you will be rewarded with a random number of shares of a random stock. Run this command to see what the potential winnings could be if you claim your free shares. Note that you can only vote for the bot every 12 hours."
+        description="If you vote for the bot on Top.gg, you will be rewarded with a random number of shares of a random stock. Run this command to see what the potential rewards could be if you claim your free shares. Note that you can only vote for the bot every 12 hours."
     )
     async def freestock(self, ctx: commands.Context):
         # Retrieve the data for all the reward stocks
@@ -439,7 +439,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             color=self.bot.green,
         )
         view = discord.ui.View()
-        vote_btn = discord.ui.Button(label="Vote", style=discord.ButtonStyle.green, url=f"https://top.gg/bot/{self.bot.user.id}/vote")
+        vote_btn = discord.ui.Button(label="Vote", url=f"https://top.gg/bot/{self.bot.user.id}/vote")
         view.add_item(vote_btn)
 
         # Send the embed and view

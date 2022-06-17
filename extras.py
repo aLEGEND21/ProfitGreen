@@ -208,6 +208,26 @@ class ProfitGreenBot(Bot):
             :diamond_shape_with_a_dot_inside: P/E Ratio: {quote_data["pe-ratio"]}
             :money_with_wings: EPS: {quote_data["eps"]}
             """
+        
+        elif quote_data["_type"] == "etf":
+            em.description = f"""
+            :dollar: **Price: ${quote_data["price"]}**
+            :small_red_triangle: **Dollar Change: {quote_data["change-dollar"]}**
+            :part_alternation_mark: **Percentage Change: {quote_data["change-percent"]}**
+            :moneybag: Previous Close Price: {quote_data["previous-close"]}
+
+            __**Metrics:**__
+            :hammer: Bid: {quote_data["bid"]}
+            :speaking_head: Ask: {quote_data["ask"]}
+            :bar_chart: Volume: {quote_data["volume"]}
+            :chart_with_upwards_trend: YTD Return: {quote_data["ytd-daily-total-return"]}
+
+            __**Valuation:**__
+            :star: Beta: {quote_data["beta"]}
+            :diamond_shape_with_a_dot_inside: P/E Ratio: {quote_data["pe-ratio"]}
+            :money_with_wings: Net Assets: ${quote_data["net-assets"]}
+            :dollar: Net Assets Per Share: ${quote_data["nav"]}
+            """
 
         """Sample crypto data: 
         {
@@ -256,6 +276,32 @@ class ProfitGreenBot(Bot):
             "price": 63.26, 
             "ticker": "KO", 
             "volume": 11517617.0
+        }"""
+
+        """Sample ETF data:
+        {
+            "52-week-range": "269.28 - 408.71", 
+            "_type": "etf", 
+            "ask": "273.18 x 800", 
+            "avg-volume": 77890915.0, 
+            "beta": 1.07, 
+            "bid": "273.18 x 1000", 
+            "change-dollar": 0.9, 
+            "change-percent": "(+0.33%)", 
+            "days-range": "272.02 - 276.06", 
+            "expense-ratio": "0.20%", 
+            "inception-date": "1999-03-10", 
+            "name": "Invesco QQQ Trust (QQQ)", 
+            "nav": 275.38, 
+            "net-assets": "166.33B", 
+            "open": 272.18, 
+            "pe-ratio": 3.61, 
+            "previous-close": 271.39, 
+            "price": 272.29, 
+            "ticker": "QQQ", 
+            "volume": 21471925.0, 
+            "yield": "0.67%", 
+            "ytd-daily-total-return": "-27.28%"
         }"""
         
         return em

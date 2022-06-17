@@ -407,6 +407,43 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
         # Send the embed and view
         m = await ctx.reply(embeds=[em], view=view)
+    
+    @commands.command(
+        name="freestock",
+        brief="Claim free shares of a random stock",
+        description="If you vote for the bot on Top.gg, you will be rewarded with a random number of shares of a random stock. Run this command to see what the potential winnings could be if you claim your free shares. Note that you can only vote for the bot every 12 hours."
+    )
+    async def freestock(self, ctx: commands.Context):
+        # Retrieve the data for all the reward stocks
+        coroutines = []
+        for stock in self.bot.reward_stocks:
+            coroutines.append(self.bot.cnbc_data(stock))
+        free_stock_data = list(await asyncio.gather(*coroutines))
+
+        # Create the string that will contain the data about the free stocks
+        stock_list_str = ""
+        for stock in free_stock_data:
+            stock_list_str += f" - Ticker: `{stock['ticker']}` --- Current Price: `${self.commify(stock['price'])}`\n"
+
+        # Generate the embed and view with the link to the vote page
+        em = discord.Embed(
+            title=":moneybag: Get A Free Stock",
+            description=f"""
+            If you vote for the bot on Top.gg, you will get a random number of shares of a random stock.
+
+            Here are the stocks that you can get free shares of:
+            {stock_list_str}
+
+            Voting for the bot on Top.gg really helps us out, so please consider voting. :heart:
+            """,
+            color=self.bot.green,
+        )
+        view = discord.ui.View()
+        vote_btn = discord.ui.Button(label="Vote", style=discord.ButtonStyle.green, url=f"https://top.gg/bot/{self.bot.user.id}/vote")
+        view.add_item(vote_btn)
+
+        # Send the embed and view
+        await ctx.reply(embeds=[em], view=view)
 
 
 def setup(bot):

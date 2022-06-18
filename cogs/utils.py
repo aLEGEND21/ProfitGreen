@@ -25,6 +25,10 @@ class Utils(commands.Cog, name="Utility Commands"):
         # Cog data
         self.emoji = ":gear:"
     
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("cogs.utils is online")
+    
     @tasks.loop(minutes=30)
     async def update_stats(self):
         """This function runs every 30 minutes to automatically update your server count."""

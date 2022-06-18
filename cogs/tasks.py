@@ -6,6 +6,7 @@ import asyncio
 import datetime
 
 from extras import *
+from config import Config
 
 
 class TaskManager(commands.Cog):
@@ -13,7 +14,8 @@ class TaskManager(commands.Cog):
     def __init__(self, bot):
         self.bot: ProfitGreenBot = bot
 
-        self.check_price_targets.start()
+        if Config.PRODUCTION:
+            self.check_price_targets.start()
     
     @commands.Cog.listener()
     async def on_ready(self):

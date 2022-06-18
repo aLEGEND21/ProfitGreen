@@ -103,6 +103,35 @@ class Logger(commands.Cog):
         # Send the embed to the logging channel
         channel = self.bot.get_channel(self.bot.log_channels[0])
         await channel.send(embed=em)
+
+        # Create the embed to introduce the bot to the new guild
+        em = discord.Embed(
+            title=f"Hi, I'm {self.bot.user.name}",
+            description=f"""
+            I'm a finance bot with a variety of commands helping you with your financial needs.
+            
+            Here are some of the things I can do:
+             - Provide real-time data for thousands of stocks and cryptocurrencies.
+             - Display different types of charts for stocks and cryptos.
+             - Allow you to invest in real stocks and cryptos with fake money.
+             - Set price alerts for your investments
+             - And more!
+            
+            My prefix in this server is `,` (Comma). Get started by typing `,help`.
+            """,
+            color=self.bot.green,
+            timestamp=datetime.datetime.now(),
+        )
+        em.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # Set the channel to send the embed to
+        if guild.system_channel is not None:
+            channel = guild.system_channel
+        else:
+            channel = guild.text_channels[0]
+
+        # Send the embed to the new guild
+        await channel.send(embeds=[em])
     
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -139,7 +168,7 @@ class Logger(commands.Cog):
         em.set_thumbnail(url=guild.icon.url)
         em.color = discord.Color.red()
         em.timestamp = datetime.datetime.now()
-
+        
         # Send the embed to the logging channel
         channel = self.bot.get_channel(self.bot.log_channels[0])
         await channel.send(embed=em)

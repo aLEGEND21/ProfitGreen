@@ -409,11 +409,11 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         m = await ctx.reply(embeds=[em], view=view)
     
     @commands.command(
-        name="freestock",
-        brief="Claim free shares of a random stock",
+        name="rewardstock",
+        brief="Get shares of a random stock",
         description="If you vote for the bot on Top.gg, you will be rewarded with a random number of shares of a random stock. Run this command to see what the potential rewards could be if you claim your free shares. Note that you can only vote for the bot every 12 hours."
     )
-    async def freestock(self, ctx: commands.Context):
+    async def rewardstock(self, ctx: commands.Context):
         # Retrieve the data for all the reward stocks
         coroutines = []
         for stock in self.bot.reward_stocks:

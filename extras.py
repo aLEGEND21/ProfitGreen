@@ -9,6 +9,7 @@ import asyncio
 import sqlite3
 import functools
 import ssl
+import random
 import cnbcfinance
 import motor.motor_asyncio
 from bs4 import BeautifulSoup
@@ -377,22 +378,41 @@ class ProfitGreenBot(Bot):
 
 class ConfirmationView(discord.ui.View):
 
-    def __init__(self, _on_timeout, on_confirm, on_cancel, timeout: int = 180):
+    def __init__(self, ctx, _on_timeout, on_confirm, on_cancel, timeout: int = 180):
         super().__init__(timeout=timeout)
+        self.ctx = ctx
         self._on_timeout = _on_timeout
         self.on_confirm = on_confirm
         self.on_cancel = on_cancel
+    
+    @property
+    def user(self):
+        if isinstance(self.ctx, discord.ApplicationContext):
+            return self.ctx.interaction.user
+        else:
+            return self.ctx.author
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await self.incorrect_user(interaction)
         self.stop()
         await self.on_confirm(btn, interaction)
     
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
     async def cancel(self, btn: discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await self.incorrect_user(interaction)
         self.stop()
         await self.on_cancel(btn, interaction)
     
     async def on_timeout(self):
         self.clear_items()
         await self._on_timeout()
+    
+    async def incorrect_user(self, interaction: discord.Interaction):
+        responses = [
+            ":x: You can't click that button.",
+            ":x: You're not the person who requested that action."
+        ]
+        await interaction.response.send_message(random.choice(responses), ephemeral=True)

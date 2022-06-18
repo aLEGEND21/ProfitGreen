@@ -285,7 +285,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             await interaction.response.edit_message(embeds=[em], view=view)
         
         # Create the view
-        view = ConfirmationView(on_timeout, on_confirm, on_cancel)
+        view = ConfirmationView(ctx, on_timeout, on_confirm, on_cancel)
 
         # Send the embed and view
         m = await ctx.reply(embeds=[em], view=view)
@@ -403,7 +403,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             await interaction.response.edit_message(embeds=[em], view=view)
         
         # Create the view
-        view = ConfirmationView(on_timeout, on_confirm, on_cancel)
+        view = ConfirmationView(ctx, on_timeout, on_confirm, on_cancel)
 
         # Send the embed and view
         m = await ctx.reply(embeds=[em], view=view)

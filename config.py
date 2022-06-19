@@ -16,6 +16,7 @@ class Config:
     TOKEN = os.getenv('TOKEN')
     PREFIX = os.getenv('PREFIX')
     TOPGG_TOKEN = os.getenv('TOPGG_TOKEN')
-    PRODUCTION = ast.literal_eval(os.getenv('PRODUCTION'))
+    PRODUCTION = ast.literal_eval(os.getenv('PRODUCTION')) # Convert to boolean
     PORT = int(os.getenv('PORT'))
     DB_CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')
+    ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')

@@ -1,12 +1,14 @@
 import discord
 from discord.ext import commands
 
+import aiohttp
 import datetime
 import os
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
 
 from extras import *
+from config import Config
 
 
 class Commands(commands.Cog, name="General Commands"):
@@ -223,6 +225,139 @@ class Commands(commands.Cog, name="General Commands"):
         em.set_image(url=chart_url)
         em.set_footer(text="Sourced From StockCharts.com", icon_url="https://stockcharts.com/favicon.ico")
         await ctx.reply(embeds=[em], mention_author=False)
+    
+    @commands.command(
+        name="sentiment",
+        brief="Displays the sentiment of a stock",
+        description="Shows the sentiment of the specified ticker symbol based on news articles retrieved and analyzed from the web. This includes the links to the articles as well so that you can read them yourself if you would like to. This command can only show the sentiment of stocks and no other asset types."
+    )
+    async def sentiment(self, ctx: commands.Context, ticker: str):
+        """
+        Example Response:
+        {
+            "items": "50",
+            "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+            "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+            "feed": [
+                {
+                    "title": "Top Wall Street analysts say these are the best stocks to beat the volatile market",
+                    "url": "https://www.cnbc.com/2022/06/19/top-wall-street-analysts-say-to-buy-apple-bank-of-america.html",
+                    "time_published": "20220619T124703",
+                    "authors": [
+                        "Tipranks.com Staff"
+                    ],
+                    "summary": "TipRanks analyst ranking service pinpoints Wall Street's best-performing stocks, including Apple and Bank of America.",
+                    "banner_image": "https://image.cnbcfm.com/api/v1/image/107071810-16545476872022-06-06t174903z_694088903_rc2gmu93g5hb_rtrmadp_0_apple-developer.jpeg?v=1654547799&w=1920&h=1080",
+                    "source": "CNBC",
+                    "category_within_source": "Investing",
+                    "source_domain": "www.cnbc.com",
+                    "topics": [
+                        {
+                            "topic": "Technology",
+                            "relevance_score": "0.5"
+                        },
+                        {
+                            "topic": "Finance",
+                            "relevance_score": "0.5"
+                        }
+                    ],
+                    "overall_sentiment_score": -0.001195,
+                    "overall_sentiment_label": "Neutral",
+                    "ticker_sentiment": [
+                        {
+                            "ticker": "AAPL",
+                            "relevance_score": "0.164431",
+                            "ticker_sentiment_score": "0.040582",
+                            "ticker_sentiment_label": "Neutral"
+                        },
+                        {
+                            "ticker": "CBSU",
+                            "relevance_score": "0.027597",
+                            "ticker_sentiment_score": "-0.626318",
+                            "ticker_sentiment_label": "Bearish"
+                        }
+                    ]
+                }
+            ]
+        }
+        """
+
+        ticker = ticker.upper()
+
+        # Make the request to get the data
+        url = f"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={ticker}&apikey={Config.ALPHA_VANTAGE_API_KEY}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                data = await resp.json()
+        
+        # Handle the ticker not being found
+        if "Information" in list(data.keys()):
+            return await ctx.send(f":x: I couldn't get any sentiment data for `{ticker}`. Make sure that `{ticker}` is a stock.")
+        else:
+            feed = data["feed"] # Retrieve all the data
+        
+        # TODO: Display the first three articles from the feed
+        # TODO: Add a cooldown for 3 runs per minute
+        # Get the overall sentiment and average it
+        overall_sentiment = 0
+        for item in feed:
+            overall_sentiment += item["overall_sentiment_score"]
+        overall_sentiment = round(overall_sentiment / len(feed), 2)
+
+        # Convert the overall sentiment into words
+        if overall_sentiment < -0.35:
+            overall_sentiment_label = "Bearish"
+        elif overall_sentiment < -0.15:
+            overall_sentiment_label = "Somewhat-Bearish"
+        elif overall_sentiment < 0.15:
+            overall_sentiment_label = "Neutral"
+        elif overall_sentiment < 0.35:
+            overall_sentiment_label = "Somewhat-Bullish"
+        else:
+            overall_sentiment_label = "Bullish"
+
+        em = discord.Embed(
+            title=f"Sentiment for `{ticker}`",
+            timestamp=datetime.datetime.now(),
+            color=self.bot.green
+        )
+        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+
+        # Get some of the relevant articles
+        articles = []
+        for i, item in enumerate(feed):
+            if len(articles) == 3: # Only retrieve three articles
+                break
+            # Get the relevance score
+            for t in item["ticker_sentiment"]:
+                if t["ticker"] == ticker:
+                    relavence_score = float(t["relevance_score"])
+            if relavence_score > 0.5: # Only display articles with a high relevance score
+                articles.append(item)
+        else:
+            articles = articles[:3] # Retrieve the first three articles if there weren't enough relevent articles
+
+
+        # Construct the fields of the embed using the article data
+        for i, item in enumerate(articles):
+            # Get the sentiment
+            for t in item["ticker_sentiment"]:
+                if t["ticker"] == ticker:
+                    sentiment = t
+            em.add_field(
+                name=f"\u200b",
+                value=f"""
+                **__[{item['title']}]({item['url']})__**
+                {item['summary']}
+                ***Sentiment: {sentiment['ticker_sentiment_label']} ({sentiment['ticker_sentiment_score']})***
+                """,
+                inline=False
+            )
+        
+        # Display the overall sentiment
+        em.description = f"**Overall Sentiment:** {overall_sentiment_label} ({overall_sentiment})"
+        
+        await ctx.send(embeds=[em])
 
     @commands.command(
         name="news",

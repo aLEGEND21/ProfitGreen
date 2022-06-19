@@ -61,10 +61,10 @@ class Utils(commands.Cog, name="Utility Commands"):
             await self.bot.create_portfolio(user)
             await self.bot.tasks.delete_one(vote) # Remove the vote task
             # Fetch the stock and calculate the data associated with it
-            stock = random.choice(self.bot.reward_stocks)
+            stock = random.choice(list(self.bot.reward_stocks.keys()))
             stock_data = await self.bot.cnbc_data(stock)
             price = stock_data["price"]
-            shares = random.randint(15, 25)
+            shares = self.bot.reward_stocks[stock]
             total = round(price * shares, 2)
             # Add the stock to the user's portfolio
             portfolio = await self.bot.fetch_portfolio(user.id)

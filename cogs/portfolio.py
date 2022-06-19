@@ -423,7 +423,11 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         # Create the string that will contain the data about the free stocks
         stock_list_str = ""
         for stock in free_stock_data:
-            stock_list_str += f" - Ticker: `{stock['ticker']}` --- Current Price: `${self.commify(stock['price'])}`\n"
+            ticker = stock['ticker']
+            price = stock['price']
+            shares = self.bot.reward_stocks[stock['ticker']]
+            total = round(price * shares, 2)
+            stock_list_str += f" - Ticker: `{ticker}` --- Current Price: `${self.commify(price)}` x Shares: `{shares}` = Total: `${self.commify(total)}`\n"
 
         # Generate the embed and view with the link to the vote page
         em = discord.Embed(

@@ -67,7 +67,11 @@ class ProfitGreenBot(Bot):
         }
         self.green = discord.Color.from_rgb(38, 186, 156)
         self.portfolio_starting_value = 100000
-        self.reward_stocks = ["META", "AMZN", "AAPL", "NFLX", "MSFT"]
+        # Set the rewards
+        rewards = ["META", "AMZN", "AAPL", "NFLX", "MSFT"]
+        self.reward_stocks = {}
+        for stock in rewards:
+            self.reward_stocks[stock] = random.randint(15, 25)
     
     async def create_portfolio(self, user: discord.User):
         if await self.fetch_portfolio(user.id) is None:

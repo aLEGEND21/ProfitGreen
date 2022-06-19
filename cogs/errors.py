@@ -70,16 +70,6 @@ class ErrorHandler(commands.Cog):
         # Handle all the errors caused by prefixed commands
         elif isinstance(error, commands.MissingRequiredArgument):
             # Show a detailed error message if the command has a usage_examples attribute
-            # OLD system of showing usage examples
-            '''if getattr(ctx.command, "usage_examples", None) is not None:
-                em = discord.Embed(
-                    title=f":package: Missing Required Argument: `{error.param.name}`",
-                    description=f":notepad_spiral: __**Command Description:**__\n{ctx.command.description}\n\n:microphone2: __**Example Usage:**__\n",
-                    color=discord.Color.red(),
-                )
-                for ex in ctx.command.usage_examples:
-                    em.description += f"`{ctx.prefix}{ctx.command.name} {ex}`\n"
-                await ctx.reply(embeds=[em])'''
             if ctx.command.extras.get("usage_examples") is not None:
                 em = discord.Embed(
                     title=f":package: Missing Required Argument: `{error.param.name}`",
@@ -91,10 +81,11 @@ class ErrorHandler(commands.Cog):
                 await ctx.reply(embeds=[em])
             else:
                 await ctx.reply(f'You must provide the `{error.param.name}` argument.')
+            ctx.command.reset_cooldown(ctx) # Reset the cooldown since the command wasn't run
         elif isinstance(error, commands.DisabledCommand):
             await ctx.reply(f'Command `{ctx.command.name}` is currently disabled.')
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.reply(f'You have to wait `{round(error.retry_after)}` seconds before you can run `{ctx.command.name}` again.')
+            await ctx.reply(f'You have to wait `{round(error.retry_after)}` seconds before you can run the `{ctx.command.name}` command again.')
         elif isinstance(error, commands.MemberNotFound):
             await ctx.reply(f'I couldn\'t find any member named `{error.argument}`.')
         elif isinstance(error, commands.RoleNotFound):

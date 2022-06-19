@@ -23,12 +23,6 @@ class Commands(commands.Cog, name="General Commands"):
     async def on_ready(self):
         print("cogs.commands is online")
 
-        # Add usage examples
-        # OLD - No longer in use due to Command.extras being discovered
-        '''self.bot.get_command("quote").usage_examples = ["AAPL", "ETH-USD", "DOGE"]
-        self.bot.get_command("chart").usage_examples = ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
-        self.bot.get_command("techchart").usage_examples = ["AAPL", "MSFT", "TSLA"]'''
-
     @commands.command(
         name="quote",
         brief="Shows current data about a ticker",
@@ -229,8 +223,12 @@ class Commands(commands.Cog, name="General Commands"):
     @commands.command(
         name="sentiment",
         brief="Displays the sentiment of a stock",
-        description="Shows the sentiment of the specified ticker symbol based on news articles retrieved and analyzed from the web. This includes the links to the articles as well so that you can read them yourself if you would like to. This command can only show the sentiment of stocks and no other asset types."
+        description="Shows the sentiment of the specified ticker symbol based on news articles retrieved and analyzed from the web. This includes the links to the articles as well so that you can read them yourself if you would like to. This command can only show the sentiment of stocks and no other asset types.",
+        extras={
+            "usage_examples": ["AAPL", "MSFT", "TSLA"]
+        }
     )
+    @commands.cooldown(3, 60, commands.BucketType.user)
     async def sentiment(self, ctx: commands.Context, ticker: str):
         """
         Example Response:
@@ -296,8 +294,6 @@ class Commands(commands.Cog, name="General Commands"):
         else:
             feed = data["feed"] # Retrieve all the data
         
-        # TODO: Display the first three articles from the feed
-        # TODO: Add a cooldown for 3 runs per minute
         # Get the overall sentiment and average it
         overall_sentiment = 0
         for item in feed:

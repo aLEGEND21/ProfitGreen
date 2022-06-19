@@ -313,7 +313,7 @@ class Commands(commands.Cog, name="General Commands"):
             overall_sentiment_label = "Bullish"
 
         em = discord.Embed(
-            title=f"Sentiment for `{ticker}`",
+            title=f":pushpin: Sentiment for `{ticker}`",
             timestamp=datetime.datetime.now(),
             color=self.bot.green
         )

@@ -48,6 +48,17 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
             quote_ticker = quote_ticker.upper() # Capitalize the ticker
             target_price = round(target_price, 5) # Prevent long decimals from being stored
             
+            # Check if the user already has a price target for this quote
+            doc = await self.bot.tasks.find_one(
+                {
+                    "_type": "price_alert",
+                    "user_id": ctx.author.id,
+                    "quote_ticker": quote_ticker,
+                }
+            )
+            if doc is not None:
+                return await ctx.send(f":x: You already have a price target for this quote.")
+
             # Add the quote_ticker and target_price to the database
             await self.bot.tasks.insert_one(
                 {

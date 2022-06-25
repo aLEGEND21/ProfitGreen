@@ -4,6 +4,7 @@ from discord.ext import commands
 import aiohttp
 import datetime
 import os
+from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
 
@@ -356,6 +357,62 @@ class Commands(commands.Cog, name="General Commands"):
         # Display the overall sentiment
         em.description = f"**Overall Sentiment:** {overall_sentiment_label} ({overall_sentiment})"
         
+        await ctx.send(embeds=[em])
+    
+    @commands.command(
+        name="lookup",
+        brief="Look up the ticker of a stock or crypto",
+        description="Find the ticker symbol of a stock or crypto by typing the name of the company in for the `<name>` parameter. This will then display some potential matches for the name and the tickers associated with them.",
+        extras={
+            "usage_examples": ["Apple", "Bitcoin", "Microsoft"]
+        }
+    )
+    async def lookup(self, ctx: commands.Context, *, name: str):
+        await ctx.trigger_typing()
+
+        # Generate the url
+        url = f"https://finance.yahoo.com/lookup?s={name}"
+        
+        # Make the request to the site
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                html = await resp.text()
+        
+        # Parse the html to get the potential matches
+        soup = BeautifulSoup(html, "html.parser")
+        similar_tickers = []
+        lookup_table = soup.find('table', {'class': 'lookup-table W(100%) Pos(r) BdB Bdc($seperatorColor) smartphone_Mx(20px)'})
+        if lookup_table is not None:
+            for row in lookup_table.tbody.find_all('tr'):
+                items = row.findChildren('td')
+                similar_tickers.append(
+                    {
+                        'symbol': items[0].text,
+                        'name': items[1].text
+                    }
+                )
+        
+        # Format the similar tickers into a string
+        desc = ""
+        for count, sim_quote in enumerate(similar_tickers):
+            # If there are more than 5 similar tickers, stop adding them
+            if count >= 5:
+                break
+            desc += f"\n **Name**: `{sim_quote['name']}`, **Ticker**: `({sim_quote['symbol']})`"
+        
+        # Check to make sure at least one ticker was found
+        if len(similar_tickers) == 0:
+            desc = f"No results were found :slight_frown:"
+
+        # Create the embed
+        em = discord.Embed(
+            title=f":pushpin: Ticker Lookup for `{name}`",
+            description=desc,
+            timestamp=datetime.datetime.now(),
+            color=self.bot.green
+        )
+        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+
         await ctx.send(embeds=[em])
 
     @commands.command(

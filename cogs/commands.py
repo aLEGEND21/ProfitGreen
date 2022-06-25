@@ -142,12 +142,15 @@ class Commands(commands.Cog, name="General Commands"):
                 return await ctx.send(f"The value you provided for `time_period` is too long ago.")
 
             # Fetch the historical prices and notify the user if the ticker was not found
-            historical_prices, skip_interval = await self.bot.fetch_historical_prices(quote_ticker, time_period)
-            historical_prices: dict
-            skip_interval: int
-            if historical_prices == False:
+            output = await self.bot.fetch_historical_prices(quote_ticker, time_period)
+            if output.get("error") is not None:
                 return await ctx.send(f"I could not find a stock or crypto of the ticker `{quote_ticker.upper()}`")
-            
+            else:
+                historical_prices = output["historical_prices"]
+                skip_interval = output["skip_interval"]
+                historical_prices: dict
+                skip_interval: int
+
             # Format the x and y axis values
             x_axis_values = list(historical_prices.keys())
             for date in x_axis_values:

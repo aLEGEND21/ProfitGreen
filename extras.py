@@ -311,6 +311,7 @@ class ProfitGreenBot(Bot):
         
         return em
     
+    @insensitive_ticker
     async def fetch_historical_prices(self, quote_ticker: str, time_period: datetime.timedelta):
         """Fetch the historical prices of a stock or crypto from Yahoo Finance. Provide the 
         quote's ticker and the time period over which you would like to fetch the prices.
@@ -321,10 +322,10 @@ class ProfitGreenBot(Bot):
                 to fetch the data from.
 
         Returns:
-            bool or dict, int: False if the quote couldn't be found or the dict containing {date: price}. Date
-                is formatted as YYYY-MM-DD or as datetime.datetime.strftime "%Y-%m-%d". If the function doesn't
-                return False, it will return the interval at which it skipped the data in order to improve 
-                processing speed in addition to the dict.
+            dict: A dict with an error and error_code if the quote couldn't be found or the dict containing
+                {date: price}. Date is formatted as YYYY-MM-DD or as datetime.datetime.strftime "%Y-%m-%d".
+                If the function doesn't return an error, it will return the interval at which it skipped the 
+                data in order to improve processing speed as one of the dict keys.
         """
         
         # Convert args to lowercase
@@ -351,7 +352,7 @@ class ProfitGreenBot(Bot):
 
                 # Return false if the quote could not be found
                 if "404 Not Found" in csv_output:
-                    return False, 0
+                    return {"error": "Quote not found", "error_code": 404}
                 
                 # The data will have been returned as a CSV string, which needs to be converted into a 
                 # list containing all the data
@@ -377,7 +378,7 @@ class ProfitGreenBot(Bot):
                     closing_prices[date] = close_price
                     await asyncio.sleep(0.001) # Allow other processes running on the same thread to be processed
         
-        return closing_prices, interval
+        return {"historical_prices": closing_prices, "skip_interval": interval}
 
 
 class ConfirmationView(discord.ui.View):

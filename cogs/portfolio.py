@@ -48,7 +48,20 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
         # Check to make sure the user has quotes in their portfolio
         if portfolio == []:
-            return await ctx.send(":x: You must buy an asset first. Do this by typing `,buy <ticker> <amount>`")
+            em = discord.Embed(
+                title=f"{ctx.author.name}'s Portfolio",
+                description=f"""
+                :dollar: Total Cash: `${self.commify(balance)}`
+                
+                :exclamation: You don't own any quotes yet. 
+                
+                :moneybag: Buy a stock or crypto by typing `{ctx.clean_prefix}buy <ticker> [amount]`
+                """,
+                color=self.bot.green,
+                timestamp=datetime.datetime.now()
+            )
+            em.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar.url)
+            return await ctx.send(embeds=[em])
 
         # Retrive the current prices of the quotes in the user's portfolio
         coroutines = []

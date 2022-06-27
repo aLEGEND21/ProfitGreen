@@ -82,6 +82,14 @@ class ErrorHandler(commands.Cog):
             else:
                 await ctx.reply(f'You must provide the `{error.param.name}` argument.')
             ctx.command.reset_cooldown(ctx) # Reset the cooldown since the command wasn't run
+        elif isinstance(error, discord.Forbidden): # Can be due to missing permissions
+            em = discord.Embed(
+                title=f":x: **Permission Error**",
+                description=f"""I'm missing the required permissions to execute `{ctx.command.name}`. Please reinvite me using the link found on my Top.gg page.""",
+                color=discord.Color.red(),
+                timestamp=datetime.datetime.now()
+            )
+            await ctx.reply(f"I'm missing the required permissions to execute `{ctx.command.name}`. Please reinvite me using this link: https://top.gg/bot/{self.bot.user.id}/invite.")
         elif isinstance(error, commands.DisabledCommand):
             await ctx.reply(f'Command `{ctx.command.name}` is currently disabled.')
         elif isinstance(error, commands.CommandOnCooldown):

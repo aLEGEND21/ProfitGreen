@@ -130,21 +130,24 @@ class ProfitGreenBot(Bot):
         loop = asyncio.get_event_loop()
         output = await loop.run_in_executor(None, sync_request, ticker)
         return output
-        # TODO: Make this run fetch_quote if the ticker is a crypto
     
     @insensitive_ticker
     async def fetch_brief(self, quote_ticker: str):
         if quote_ticker.upper().endswith("-USD"):
             _output = await self.fetch_quote(quote_ticker)
-            output = {
-                "_type": _output["_type"],
-                "change": _output["change-dollar"],
-                "change_pct": _output["change-percent"],
-                "name": _output["name"][:-len(f" ({quote_ticker}-USD)")], # Remove the ticker from the name
-                "open": float(_output["open"]),
-                "price": float(_output["price"]),
-                "ticker": _output["ticker"]
-            }
+            # Check that its a valid ticker
+            if _output.get("error") is None:
+                output = {
+                    "_type": _output["_type"],
+                    "change": _output["change-dollar"],
+                    "change_pct": _output["change-percent"],
+                    "name": _output["name"][:-len(f" ({quote_ticker}-USD)")], # Remove the ticker from the name
+                    "open": float(_output["open"]),
+                    "price": float(_output["price"]),
+                    "ticker": _output["ticker"]
+                }
+            else:
+                output = _output
             print(output)
         else:
             output = await self.cnbc_data(quote_ticker)

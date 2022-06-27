@@ -41,6 +41,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         aliases=["myportfolio", "mp"]
     )
     async def portfolio(self, ctx: commands.Context):
+        await ctx.trigger_typing()
+
         # Retrieve the user's portfolio data from the database
         portfolio_data = await self.bot.fetch_portfolio(ctx.author.id)
         balance = portfolio_data["balance"]
@@ -66,7 +68,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         # Retrive the current prices of the quotes in the user's portfolio
         coroutines = []
         for quote in portfolio:
-            coroutines.append(self.bot.cnbc_data(quote["ticker"]))
+            coroutines.append(self.bot.fetch_brief(quote["ticker"]))
         price_data = list(await asyncio.gather(*coroutines)) # Run the coroutines in parallel
         price_data.sort(key=lambda p: p["ticker"])
 
@@ -194,9 +196,11 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
     )
     async def buy(self, ctx: commands.Context, ticker: str, quantity: str = "1"):
         # TODO: Limit the number of quotes that people can buy to a maximum of 24
+        await ctx.trigger_typing()
+        
         # Format variables
         ticker = ticker.upper()
-        if "-" in ticker: return await ctx.send(":x: Sorry, cryptocurrencies are not yet supprted, but will be soon.") # No crypto support yet :(
+        #if "-" in ticker: return await ctx.send(":x: Sorry, cryptocurrencies are not yet supprted, but will be soon.") # No crypto support yet :(
         try:
             quantity = int(quantity)
             if quantity < 1:
@@ -205,7 +209,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             return await ctx.send(":x: The `quantity` parameter only accepts positive whole numbers.")
 
         # Retrieve all data
-        price_data = await self.bot.cnbc_data(ticker)
+        price_data = await self.bot.fetch_brief(ticker)
         portfolio_data = await self.bot.fetch_portfolio(ctx.author.id)
         balance = round(portfolio_data["balance"], 3)
 
@@ -213,10 +217,11 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         if price_data.get("error_code") is not None:
             return await ctx.send(":x: Please enter a valid ticker.")
         else:
-            price = round(price_data.get("price"), 3)
+            price = round(price_data.get("price"), 5)
+            ticker = price_data.get("ticker")
 
         # Calculate total cost
-        total = round(price * quantity, 3)
+        total = round(price * quantity, 5)
         
         # Check if the user has enough money to buy the stock
         if total > balance:
@@ -312,6 +317,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         }
     )
     async def sell(self, ctx: commands.Context, ticker: str, quantity: str = "1"):
+        await ctx.trigger_typing()
+
         # Format variables
         ticker = ticker.upper()
         try:
@@ -322,7 +329,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             return await ctx.send(":x: Enter a positive whole number for the `quantity` parameter.")
 
         # Retrieve all data
-        price_data = await self.bot.cnbc_data(ticker)
+        price_data = await self.bot.fetch_brief(ticker)
         portfolio_data = await self.bot.fetch_portfolio(ctx.author.id)
         balance = round(portfolio_data["balance"], 3)
 
@@ -330,7 +337,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         if price_data.get("error_code") is not None:
             return await ctx.send(":x: Please enter a valid ticker symbol.")
         else:
-            price = round(price_data.get("price"), 3)
+            price = round(price_data.get("price"), 5)
+            ticker = price_data.get("ticker")
         
         # Check if the user owns the quote. If they do, then store their user-specific data about it
         for quote in portfolio_data["portfolio"]:
@@ -341,7 +349,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             return await ctx.send(":x: You do not already own this quote.")
 
         # Calculate the total value of the order
-        total = round(price * quantity, 3)
+        total = round(price * quantity, 5)
         
         # Check if the user owns enough shares to sell
         if quote_data["quantity"] < quantity:

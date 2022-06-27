@@ -156,6 +156,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
         # Create the select menu callback
         async def select_menu_callback(interaction: discord.Interaction):
+            if interaction.user.id != ctx.author.id:
+                return await interaction.response.send_message("You're not allowed to use this menu.", ephemeral=True)
             selected_page_value = interaction.data['values'][0]
             if selected_page_value == "Portfolio Overview":
                 await paginator.goto_page(0, interaction=interaction)

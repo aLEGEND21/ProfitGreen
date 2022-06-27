@@ -321,7 +321,7 @@ class Commands(commands.Cog, name="General Commands"):
             timestamp=datetime.datetime.now(),
             color=self.bot.green
         )
-        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar)
 
         # Get some of the relevant articles
         articles = []
@@ -411,7 +411,7 @@ class Commands(commands.Cog, name="General Commands"):
             timestamp=datetime.datetime.now(),
             color=self.bot.green
         )
-        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar)
 
         await ctx.send(embeds=[em])
 

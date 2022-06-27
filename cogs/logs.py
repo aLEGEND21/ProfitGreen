@@ -53,7 +53,7 @@ class Logger(commands.Cog):
             :checkered_flag: Command Failure: `{ctx.command_failed}`
             """
         )
-        em.set_thumbnail(url=ctx.author.avatar.url)
+        em.set_thumbnail(url=ctx.author.display_avatar)
         em.timestamp = datetime.datetime.now()
         if ctx.command_failed:
             em.color = discord.Color.red()

@@ -62,7 +62,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
                 color=self.bot.green,
                 timestamp=datetime.datetime.now()
             )
-            em.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar.url)
+            em.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.display_avatar)
             return await ctx.send(embeds=[em])
 
         # Retrive the current prices of the quotes in the user's portfolio
@@ -127,8 +127,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             timestamp=datetime.datetime.now(),
             color=discord.Color.green() if pct_change >= 0 else discord.Color.red()
         )
-        summary_em.set_thumbnail(url=ctx.author.avatar.url)
-        summary_em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+        summary_em.set_thumbnail(url=ctx.author.display_avatar)
+        summary_em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
 
         # Create the embeds for each quote in the user's portfolio
         quote_pages = [summary_em]
@@ -150,8 +150,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
                 timestamp=datetime.datetime.now(),
                 color=discord.Color.green() if quote_data['holding_change_pct'] >= 0 else discord.Color.red()
             )
-            em.set_thumbnail(url=ctx.author.avatar.url)
-            em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+            em.set_thumbnail(url=ctx.author.display_avatar)
+            em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
             quote_pages.append(em)
 
         # Create the select menu callback
@@ -246,7 +246,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             color=discord.Color.green(),
             timestamp=datetime.datetime.now()
         )
-        em.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
+        em.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.display_avatar)
         
         # View callbacks
 
@@ -374,7 +374,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             color=self.bot.green,
             timestamp=datetime.datetime.now()
         )
-        em.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
+        em.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.display_avatar)
         
         # View callbacks
 

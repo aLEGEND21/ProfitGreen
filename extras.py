@@ -1,5 +1,5 @@
 import discord 
-from discord.ext.commands import Bot
+from discord.ext import commands
 
 import aiohttp
 import asyncio
@@ -50,7 +50,7 @@ def insensitive_ticker(func):
     return wrapper
 
 
-class ProfitGreenBot(Bot):
+class ProfitGreenBot(commands.Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -335,75 +335,6 @@ class ProfitGreenBot(Bot):
         }"""
         
         return em
-    
-    @insensitive_ticker
-    async def fetch_historical_prices(self, quote_ticker: str, time_period: datetime.timedelta):
-        """Fetch the historical prices of a stock or crypto from Yahoo Finance. Provide the 
-        quote's ticker and the time period over which you would like to fetch the prices.
-
-        Args:
-            quote_ticker (str): The ticker of the quote to fetch.
-            time_period (datetime.timedelta): A timedelta of the time period over which you would like
-                to fetch the data from.
-
-        Returns:
-            dict: A dict with an error and error_code if the quote couldn't be found or the dict containing
-                {date: price}. Date is formatted as YYYY-MM-DD or as datetime.datetime.strftime "%Y-%m-%d".
-                If the function doesn't return an error, it will return the interval at which it skipped the 
-                data in order to improve processing speed as one of the dict keys.
-        """
-        
-        # Convert args to lowercase
-        quote_ticker = quote_ticker.lower()
-        
-        # Construct the time periods
-        period2 = datetime.datetime.today()
-        period1 = period2 - time_period
-        period2 = str(round(period2.timestamp()))
-        period1 = str(round(period1.timestamp()))
-
-        # Replace the url with the correct quote url
-        #url = "https://finance.yahoo.com/quote/<quote>/history?period1=<period1>&period2=<period2>"
-        url = "https://query1.finance.yahoo.com/v7/finance/download/<quote>?period1=<period1>&period2=<period2>"
-        url = url.replace("<quote>", quote_ticker)
-        url = url.replace("<period1>", period1)
-        url = url.replace("<period2>", period2)
-
-        # Make the request to the url
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as req:
-                
-                csv_output = await req.text()
-
-                # Return false if the quote could not be found
-                if "404 Not Found" in csv_output:
-                    return {"error": "Quote not found", "error_code": 404}
-                
-                # The data will have been returned as a CSV string, which needs to be converted into a 
-                # list containing all the data
-                lines = csv_output.splitlines()
-                reader_output = csv.reader(lines)
-                all_price_data = list(reader_output)
-                
-                # Set the interval at which the data should be processed to improve processing speed
-                if len(all_price_data) > 365:
-                    interval = round(len(all_price_data) / 150)
-                else:
-                    interval = 1
-
-                # Extract the closing prices and dates from the data
-                closing_prices = {}
-                for day_num in range(1, len(all_price_data)-1, interval): # Skip first row as it contains the table header
-                    day_data = all_price_data[day_num]
-                    # Ignore dividends
-                    if len(day_data) == 2:
-                        continue
-                    date = day_data[0] # Date is the first data point
-                    close_price = float(day_data[4]) # Price is the 5th data point
-                    closing_prices[date] = close_price
-                    await asyncio.sleep(0.001) # Allow other processes running on the same thread to be processed
-        
-        return {"historical_prices": closing_prices, "skip_interval": interval}
 
 
 class ConfirmationView(discord.ui.View):
@@ -446,3 +377,9 @@ class ConfirmationView(discord.ui.View):
             ":x: You're not the person who requested that action."
         ]
         await interaction.response.send_message(random.choice(responses), ephemeral=True)
+
+
+class InvalidTicker(Exception):
+    def __init__(self, ctx: commands.Context, ticker: str):
+        self.ctx = ctx
+        self.ticker = ticker

@@ -3,10 +3,13 @@ from discord.ext import commands
 
 import aiohttp
 import datetime
+import pandas as pd
+import pandas_datareader.data as web
+import plotly.express as px
 import os
 from bs4 import BeautifulSoup
-from matplotlib import pyplot as plt
-from matplotlib import dates as mdates
+#from matplotlib import pyplot as plt # No longer used
+#from matplotlib import dates as mdates # No longer used
 
 from extras import *
 from config import Config
@@ -76,125 +79,129 @@ class Commands(commands.Cog, name="General Commands"):
         }
     )
     async def chart(self, ctx: commands.Context, quote_ticker: str, time_period: str="6m"):
-        async with ctx.typing(): # Some computations take a long time so make the user believe the bot is typing them out
-            
-            # Format arguments
-            quote_ticker = quote_ticker.lower()
-            quote_ticker = quote_ticker.strip("<>()[]{}")
-            time_period = time_period.lower()
+        await ctx.trigger_typing()
 
-            # Parse time_period input. Set formatting_error to True if there is an
-            # issue with the way the user formatted their input. Otherwise, construct 
-            # the timedeltas.
-            formatting_error = False
-            if time_period[-1] == "d":
-                if time_period[:-1].isnumeric():
-                    time_period = datetime.timedelta(days=int(time_period[:-1]))
-                else:
-                    formatting_error = True
-            elif time_period[-1] == "m":
-                if time_period[:-1].isnumeric():
-                    time_period = datetime.timedelta(days=int(time_period[:-1])*30)
-                else:
-                    formatting_error = True
-            elif time_period[-1] == "y":
-                if time_period[:-1].isnumeric():
-                    time_period = datetime.timedelta(days=int(time_period[:-1])*365)
-                else:
-                    formatting_error = True
+        # Format arguments
+        quote_ticker = quote_ticker.lower()
+        quote_ticker = quote_ticker.strip("<>()[]{}")
+        time_period = time_period.lower()
+
+        # Parse time_period input. Set formatting_error to True if there is an
+        # issue with the way the user formatted their input. Otherwise, construct 
+        # the timedeltas.
+        formatting_error = False
+        if time_period[-1] == "d":
+            if time_period[:-1].isnumeric():
+                time_period = datetime.timedelta(days=int(time_period[:-1]))
             else:
                 formatting_error = True
-            
-            # Send a message and return if there was a formatting error
-            if formatting_error:
-                indent = "\u200b " * 4
-                
-                # Generate the valid command usage. If the bot has just been started, ctx.command will
-                # not have the usage_examles attribute which is why we check for it with hasattr().
-                usage_examples_text = ""
-                if hasattr(ctx.command, "usage_examples"):
-                    usage_examples_text = "\nHere are some examples of valid command usage:\n"
-                    for ex in ctx.command.usage_examples:
-                        usage_examples_text += f"{indent}- `{ctx.prefix}{ctx.command.name} {ex}`\n"
-                
-                # Create the embed
-                em = discord.Embed(
-                    title=":x: Invalid Time Period",
-                    description=f"""
-                    Please provide valid formatting for the time period argument.
-
-                    The time period must be formatted as follows: `<number><time_period_type>`.
-                    The number must be a valid number. The time period type must be one of the following:
-                    {indent}- `d` for days
-                    {indent}- `m` for months
-                    {indent}- `y` for years
-                    {usage_examples_text}
-                    Type `{ctx.prefix}help chart` for more information.
-                    """,
-                    color=discord.Color.red()
-                )
-                return await ctx.reply(embeds=[em])
-            
-            # Prevent the user from supplying less than 7 days to prevent the chart from having too
-            # few data points. Also prevent the user from supplying a date farther back than Jan 1, 1970
-            if time_period < datetime.timedelta(days=7):
-                return await ctx.send(f"Please provide a value for `time period` that is greater than `7 days`.")
-            elif datetime.datetime.today() - time_period < datetime.datetime(1970, 1, 1):
-                return await ctx.send(f"The value you provided for `time_period` is too long ago.")
-
-            # Fetch the historical prices and notify the user if the ticker was not found
-            output = await self.bot.fetch_historical_prices(quote_ticker, time_period)
-            if output.get("error") is not None:
-                return await ctx.send(f"I could not find a stock or crypto of the ticker `{quote_ticker.upper()}`")
+        elif time_period[-1] == "m":
+            if time_period[:-1].isnumeric():
+                time_period = datetime.timedelta(days=int(time_period[:-1])*30)
             else:
-                historical_prices = output["historical_prices"]
-                skip_interval = output["skip_interval"]
-                historical_prices: dict
-                skip_interval: int
-
-            # Format the x and y axis values
-            x_axis_values = list(historical_prices.keys())
-            for date in x_axis_values:
-                x_axis_values[x_axis_values.index(date)] = mdates.date2num(datetime.datetime.strptime(date, "%Y-%m-%d"))
-            y_axis_values = list(historical_prices.values())
-
-            # Change plot settings and the plot the data using matplotlib. Reuse the color
-            # var when sending the embed with the chart image on Discord
-            if y_axis_values[0] < y_axis_values[-1]:
-                color = ("green", discord.Color.green())
-            elif y_axis_values[0] > y_axis_values[-1]:
-                color = ("red", discord.Color.red())
+                formatting_error = True
+        elif time_period[-1] == "y":
+            if time_period[:-1].isnumeric():
+                time_period = datetime.timedelta(days=int(time_period[:-1])*365)
             else:
-                color = ("black", discord.Color.blurple())
-            start_day = datetime.datetime.strptime(list(historical_prices.keys())[0], "%Y-%m-%d").strftime('%b %d, %Y')
-            plt.title(f"{quote_ticker.upper()} Price Chart {start_day} - Today")
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d, %Y'))
-            interval = round(len(x_axis_values) / 3 * skip_interval) # Set the interval between the dates
-            plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=interval))
-            plt.plot(x_axis_values, y_axis_values, color=color[0])
+                formatting_error = True
+        else:
+            formatting_error = True
+        
+        # Send a message and return if there was a formatting error
+        if formatting_error:
+            indent = "\u200b " * 4
+            
+            # Generate the valid command usage. If the bot has just been started, ctx.command will
+            # not have the usage_examles attribute which is why we check for it with hasattr().
+            usage_examples_text = ""
+            if hasattr(ctx.command, "usage_examples"):
+                usage_examples_text = "\nHere are some examples of valid command usage:\n"
+                for ex in ctx.command.usage_examples:
+                    usage_examples_text += f"{indent}- `{ctx.prefix}{ctx.command.name} {ex}`\n"
+            
+            # Create the embed
+            em = discord.Embed(
+                title=":x: Invalid Time Period",
+                description=f"""
+                Please provide valid formatting for the time period argument.
 
-            # Convert the graph into an image and save it
-            plt.savefig(f"{quote_ticker.upper()}_delete.png")
-            plt.clf()
+                The time period must be formatted as follows: `<number><time_period_type>`.
+                The number must be a valid number. The time period type must be one of the following:
+                {indent}- `d` for days
+                {indent}- `m` for months
+                {indent}- `y` for years
+                {usage_examples_text}
+                Type `{ctx.prefix}help chart` for more information.
+                """,
+                color=discord.Color.red()
+            )
+            return await ctx.reply(embeds=[em])
+        
+        # Prevent the user from supplying less than 7 days to prevent the chart from having too
+        # few data points. Also prevent the user from supplying a date farther back than Jan 1, 1970
+        if time_period < datetime.timedelta(days=7):
+            return await ctx.send(f"Please provide a value for `time period` that is greater than `7 days`.")
+        elif datetime.datetime.today() - time_period < datetime.datetime(1970, 1, 1):
+            return await ctx.send(f"The value you provided for `time_period` is too long ago.")        
 
-            # Send the saved image on Discord.
-            #
-            # Send the image file to a muted logging channel, extract the url, 
-            # and delete it.
-            img_file = discord.File(f"{quote_ticker.upper()}_delete.png")
-            log_channel = await self.bot.fetch_channel(self.bot.log_channels[0])
-            msg = await log_channel.send(files=[img_file])
-            img_url = msg.attachments[0].url
-            await msg.delete()
-            # Use the image url for the url of the image field on the embed and send.
-            em = discord.Embed(title=f"{quote_ticker.upper()} Price Chart", color=color[1])
-            em.set_image(url=img_url)
-            em.set_footer(text="Sourced From Yahoo Finance", icon_url="https://cdn.discordapp.com/attachments/812338726557450240/957714639637069874/favicon.png")
-            em.timestamp = datetime.datetime.now()
-            await ctx.reply(embeds=[em], mention_author=False)
+        # Construct the time periods
+        period2 = datetime.datetime.today()
+        period1 = period2 - time_period
 
-            # Delete the saved image
-            os.remove(f"{quote_ticker.upper()}_delete.png")
+        # Retrieve all the data
+        @insensitive_ticker
+        async def get_data(self, quote_ticker: str): # self is required so that the command can be used with the insensitive_ticker decorator
+            loop = asyncio.get_event_loop()
+            try:
+                output = await loop.run_in_executor(None, lambda: web.DataReader(quote_ticker, 'yahoo', period1, period2))
+            except:
+                return {
+                    "error": "Could not retrieve data from Yahoo Finance.",
+                    "error_code": 404
+                } # Ticker is invalid
+            output = output['Close']
+            df = pd.DataFrame(output)
+            return df
+        df = await get_data(self, quote_ticker)
+        if df is False:
+            return await ctx.send(f":x: I could not find a quote with ticker `{quote_ticker}`.")
+
+        # Record the line and embed colors
+        if df.iloc[-1]['Close'] > df.iloc[0]['Close']:
+            color = ("Green", discord.Color.green())
+        elif df.iloc[-1]['Close'] < df.iloc[0]['Close']:
+            color = ("Red", discord.Color.red())
+        else:
+            color = ("Gray", discord.Color.light_gray())
+        
+        # Generate the chart and format it
+        chart = px.line(df, title=f"{quote_ticker.upper()} Historical Price Chart", render_mode="") # For some reason, if render_mode="" is not specified, the line color is black for long time periods
+        chart.update_traces({"line_color": color[0]}) # Set line color
+        chart.update_layout({"plot_bgcolor": "#FFFFFF"}, title_x=0.5) # Change the bg line color and center the title
+        chart.update_xaxes(title_text="") # Remove text from x-axis
+        chart.update_yaxes(title_text=f"", gridcolor="#EEEEEE", linewidth=1) # Remove text from y-axis and add gridlines in the background
+        chart.update_layout(showlegend=False)
+        chart.write_image(f"{quote_ticker.upper()}_delete.png")
+
+        # Send the saved image on Discord.
+        #
+        # Send the image file to a muted logging channel, extract the url, 
+        # and delete it.
+        img_file = discord.File(f"{quote_ticker.upper()}_delete.png")
+        log_channel = await self.bot.fetch_channel(self.bot.log_channels[0])
+        msg = await log_channel.send(files=[img_file])
+        img_url = msg.attachments[0].url
+        await msg.delete()
+        # Use the image url for the url of the image field on the embed and send.
+        em = discord.Embed(title=f"{quote_ticker.upper()} Price Chart", color=color[1])
+        em.set_image(url=img_url)
+        em.set_footer(text="Sourced From Yahoo Finance", icon_url="https://cdn.discordapp.com/attachments/812338726557450240/957714639637069874/favicon.png")
+        em.timestamp = datetime.datetime.now()
+        await ctx.reply(embeds=[em], mention_author=False)
+
+        # Delete the saved image
+        os.remove(f"{quote_ticker.upper()}_delete.png")
     
     @commands.command(
         name="techchart",

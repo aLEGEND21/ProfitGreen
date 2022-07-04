@@ -17,12 +17,21 @@ intents.message_content = True
 # Choose API V9 in order to bypass message content intent requirement
 #discord.http.API_VERSION = 9
 
+# Set the debug_guilds
+if Config.PRODUCTION:
+    debug_guilds = None
+else:
+    debug_guilds=[
+        818859166772363314 # bot test server
+    ]
+
 # Create the bot
 bot = ProfitGreenBot (
                 command_prefix=commands.when_mentioned_or(Config.PREFIX),
                 case_insensitive=True,
                 strip_after_prefix=True,
-                intents=intents
+                intents=intents,
+                debug_guilds=debug_guilds
                 )
 
 # Set the developer's id

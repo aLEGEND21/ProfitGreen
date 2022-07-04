@@ -7,6 +7,7 @@ import aiohttp
 import json
 import random
 import datetime
+import time
 
 from extras import *
 from config import Config
@@ -104,6 +105,23 @@ class Utils(commands.Cog, name="Utility Commands"):
                 )
                 log_channel = self.bot.get_channel(self.bot.log_channels[0])
                 await log_channel.send(embeds=[log_em])
+        # Fetch all upvote_reminders from the tasks collection
+        cursor = self.bot.tasks.find({"_type": "upvote_reminder"})
+        for reminder in await cursor.to_list(length=None):
+            if reminder['remind_timestamp'] < time.time(): # Make sure that the time for the reminder to execute has already passed
+                user = await self.bot.fetch_user(reminder['user'])
+                em = discord.Embed(
+                    title=":calendar_spiral: Upvote Reminder",
+                    description=f"Hey `{user.name}`, you can vote for me again on Top.gg!\n\n{self.bot._emojis['profitgreen']} Here's the link to vote: https://top.gg/bot/{self.bot.user.id}/vote",
+                    color=self.bot.green,
+                    timestamp=datetime.datetime.now()
+                )
+                # Send the user the previously created embed
+                try:
+                    await user.send(embeds=[em])
+                except: # User has DMs disabled
+                    pass
+                await self.bot.tasks.delete_one(reminder) # Delete the reminder task
 
     @parse_votes.before_loop
     async def before_parse_votes(self):

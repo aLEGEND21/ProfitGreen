@@ -7,7 +7,7 @@ from flask import request
 
 # Declare the var to hold all the users to remind them of their next vote
 REMIND_USERS = [
-    #416730155332009984, # aLEGEND#8740
+    416730155332009984, # aLEGEND#8740
     388874485303869441, # Brian McLogan#7569
     726516937676423188, # IamtheBest#7537
     411315998646468608, # m0m1n#2300

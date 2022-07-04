@@ -41,7 +41,7 @@ def topgg_webhook():
         "user": request.json["user"]
     })
     # Add a task to remind the user to the database
-    if request.json["user"] in REMIND_USERS:
+    if int(request.json["user"]) in REMIND_USERS:
         tasks.insert_one({
             "_type": "upvote_reminder",
             "user": request.json["user"],

@@ -1,4 +1,6 @@
 import discord
+from discord.ui import View
+from discord.ui import Button
 from discord.ext import commands
 
 import aiohttp
@@ -73,7 +75,7 @@ class Commands(commands.Cog, name="General Commands"):
     @commands.command(
         name="chart",
         brief="Displays a price chart for a ticker",
-        description="Displays a price chart of the specified stock or crypto.",
+        description="Displays a price chart of the specified stock or crypto. You can provide the `time_period` argument to specify how long ago the chart shows prices from, or you can leave it out so that you can use buttons below the chart to select the time period.",
         extras={
             "usage_examples": ["AAPL 9m", "BTC-USD 2y", "DOGE 24d"]
         }
@@ -82,7 +84,7 @@ class Commands(commands.Cog, name="General Commands"):
         await ctx.trigger_typing()
 
         # Format arguments
-        quote_ticker = quote_ticker.lower()
+        quote_ticker = quote_ticker.upper()
         quote_ticker = quote_ticker.strip("<>()[]{}")
         time_period = time_period.lower()
 
@@ -132,6 +134,9 @@ class Commands(commands.Cog, name="General Commands"):
                 {indent}- `m` for months
                 {indent}- `y` for years
                 {usage_examples_text}
+
+                Alternatively, if you leave out the time period, you will be able to select from various time periods using buttons below the chart.
+                
                 Type `{ctx.prefix}help chart` for more information.
                 """,
                 color=discord.Color.red()
@@ -145,63 +150,116 @@ class Commands(commands.Cog, name="General Commands"):
         elif datetime.datetime.today() - time_period < datetime.datetime(1970, 1, 1):
             return await ctx.send(f"The value you provided for `time_period` is too long ago.")        
 
+        async def generate_chart_embed(quote_ticker: str, period1: datetime.datetime, period2: datetime.datetime):
+            # Retrieve all the data
+            @insensitive_ticker
+            async def get_data(self, quote_ticker: str, period1: datetime.datetime, period2: datetime.datetime): # self is required so that the command can be used with the insensitive_ticker decorator
+                loop = asyncio.get_event_loop()
+                try:
+                    output = await loop.run_in_executor(None, lambda: web.DataReader(quote_ticker, 'yahoo', period1, period2))
+                except:
+                    return {
+                        "error": "Could not retrieve data from Yahoo Finance.",
+                        "error_code": 404
+                    } # Ticker is invalid
+                output = output['Close']
+                df = pd.DataFrame(output)
+                return df
+            df = await get_data(self, quote_ticker, period1, period2)
+            if type(df) == dict: # 404 not found
+                return False
+            
+            # Record the line and embed colors
+            if df.iloc[-1]['Close'] > df.iloc[0]['Close']:
+                color = ("Green", discord.Color.green())
+            elif df.iloc[-1]['Close'] < df.iloc[0]['Close']:
+                color = ("Red", discord.Color.red())
+            else:
+                color = ("Gray", discord.Color.light_gray())
+            
+            # Generate and format the chart
+            chart = px.line(df, title=f"{quote_ticker.upper()} Historical Price Chart ({period1.strftime('%b %d, %Y')} - {period2.strftime('%b %d, %Y')})", render_mode="") # For some reason, if render_mode="" is not specified, the line color is black for long time periods
+            chart.update_traces({"line_color": color[0]}) # Set line color
+            chart.update_layout({"plot_bgcolor": "#FFFFFF"}, title_x=0.5) # Change the bg line color and center the title
+            chart.update_xaxes(title_text="") # Remove text from x-axis
+            chart.update_yaxes(title_text=f"", gridcolor="#EEEEEE", linewidth=1) # Remove text from y-axis and add gridlines in the background
+            chart.update_layout(showlegend=False)
+            chart.write_image(f"{quote_ticker.upper()}_delete.png")
+
+            # Send the saved image on Discord.
+            #
+            # Send the image file to a muted logging channel, extract the url, 
+            # and delete it.
+            img_file = discord.File(f"{quote_ticker.upper()}_delete.png")
+            log_channel = await self.bot.fetch_channel(self.bot.log_channels[0])
+            msg = await log_channel.send(files=[img_file])
+            img_url = msg.attachments[0].url
+            await msg.delete()
+            os.remove(f"{quote_ticker.upper()}_delete.png") # Delete the saved image
+
+            em = discord.Embed(
+                title=f"{quote_ticker.upper()} Price Chart",
+                color=color[1]
+            )
+            em.set_image(url=img_url)
+            em.set_footer(text="Sourced From Yahoo Finance", icon_url="https://cdn.discordapp.com/attachments/812338726557450240/957714639637069874/favicon.png")
+            em.timestamp = datetime.datetime.now()
+            
+            return em
+        
+        # Declare the callback for whenever the user clicks on one of the time period buttons
+        async def timespan_selected(interaction: discord.Interaction):
+            btn_id = interaction.data['custom_id']
+            # Enable all of the buttons and disable the selected button since it has been selected
+            for b in buttons:
+                buttons[b].disabled = False
+                buttons[b].style = blurple
+            buttons[btn_id].disabled = True
+            buttons[btn_id].style = green
+            view.children = list(buttons.values())
+            # Get the time periods
+            time_period = {
+                "7d": datetime.timedelta(days=7),
+                "1m": datetime.timedelta(days=30),
+                "6m": datetime.timedelta(days=180),
+                "1y": datetime.timedelta(days=365),
+                "5y": datetime.timedelta(days=1825)
+            }
+            time_period = time_period[btn_id]
+            period2 = datetime.datetime.now()
+            period1 = period2 - time_period
+            # Generate the embed and update everything
+            em = await generate_chart_embed(quote_ticker, period1, period2)
+            await interaction.response.edit_message(embeds=[em], view=view)
+
+        # Generate the buttons and add them to the view
+        blurple = discord.ButtonStyle.blurple
+        green = discord.ButtonStyle.green
+        buttons = {
+            '7d': Button(label="7d", custom_id="7d", style=blurple),
+            '1m': Button(label="1m", custom_id="1m", style=blurple),
+            '6m': Button(label="6m", custom_id="6m", style=green, disabled=True),
+            '1y': Button(label="1y", custom_id="1y", style=blurple),
+            '5y': Button(label="5y", custom_id="5y", style=blurple)
+        }
+        for b in buttons: buttons[b].callback = timespan_selected
+        view = View(*list(buttons.values()))
+        
         # Construct the time periods
         period2 = datetime.datetime.today()
         period1 = period2 - time_period
 
-        # Retrieve all the data
-        @insensitive_ticker
-        async def get_data(self, quote_ticker: str): # self is required so that the command can be used with the insensitive_ticker decorator
-            loop = asyncio.get_event_loop()
-            try:
-                output = await loop.run_in_executor(None, lambda: web.DataReader(quote_ticker, 'yahoo', period1, period2))
-            except:
-                return {
-                    "error": "Could not retrieve data from Yahoo Finance.",
-                    "error_code": 404
-                } # Ticker is invalid
-            output = output['Close']
-            df = pd.DataFrame(output)
-            return df
-        df = await get_data(self, quote_ticker)
-        if df is False:
-            return await ctx.send(f":x: I could not find a quote with ticker `{quote_ticker}`.")
-
-        # Record the line and embed colors
-        if df.iloc[-1]['Close'] > df.iloc[0]['Close']:
-            color = ("Green", discord.Color.green())
-        elif df.iloc[-1]['Close'] < df.iloc[0]['Close']:
-            color = ("Red", discord.Color.red())
-        else:
-            color = ("Gray", discord.Color.light_gray())
+        # Generate the embed with chart and check if the ticker couldn't be found
+        em = await generate_chart_embed(quote_ticker, period1, period2)
+        if em is False:
+            return await ctx.send(f":x: I couldn't find a quote with ticker `{quote_ticker}`")
         
-        # Generate the chart and format it
-        chart = px.line(df, title=f"{quote_ticker.upper()} Historical Price Chart", render_mode="") # For some reason, if render_mode="" is not specified, the line color is black for long time periods
-        chart.update_traces({"line_color": color[0]}) # Set line color
-        chart.update_layout({"plot_bgcolor": "#FFFFFF"}, title_x=0.5) # Change the bg line color and center the title
-        chart.update_xaxes(title_text="") # Remove text from x-axis
-        chart.update_yaxes(title_text=f"", gridcolor="#EEEEEE", linewidth=1) # Remove text from y-axis and add gridlines in the background
-        chart.update_layout(showlegend=False)
-        chart.write_image(f"{quote_ticker.upper()}_delete.png")
-
-        # Send the saved image on Discord.
-        #
-        # Send the image file to a muted logging channel, extract the url, 
-        # and delete it.
-        img_file = discord.File(f"{quote_ticker.upper()}_delete.png")
-        log_channel = await self.bot.fetch_channel(self.bot.log_channels[0])
-        msg = await log_channel.send(files=[img_file])
-        img_url = msg.attachments[0].url
-        await msg.delete()
-        # Use the image url for the url of the image field on the embed and send.
-        em = discord.Embed(title=f"{quote_ticker.upper()} Price Chart", color=color[1])
-        em.set_image(url=img_url)
-        em.set_footer(text="Sourced From Yahoo Finance", icon_url="https://cdn.discordapp.com/attachments/812338726557450240/957714639637069874/favicon.png")
-        em.timestamp = datetime.datetime.now()
-        await ctx.reply(embeds=[em], mention_author=False)
-
-        # Delete the saved image
-        os.remove(f"{quote_ticker.upper()}_delete.png")
+        # Send the embed with view if the user didn't supply the time period. Otherwise, send only
+        # the embed containing the price chart
+        if time_period == datetime.timedelta(days=180):
+            await ctx.reply(embeds=[em], view=view)
+        else:
+            await ctx.reply(embeds=[em])
     
     @commands.command(
         name="techchart",

@@ -98,8 +98,18 @@ class Utils(commands.Cog, name="Utility Commands"):
                 pass
             # Log the vote in the bot's log channel
             if user.id != self.bot.owner_id:
+                # Get the total number of votes
+                url = f"{self.topgg_api}/bots/{self.bot.user.id}/votes"
+                headers = {
+                    "Authorization": self.bot.topgg_token
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, headers=headers) as r:
+                        data = await r.json()
+                        vote_len = len(data)
                 log_em = discord.Embed(
                     title=f":gem: `{user.name}#{user.discriminator}` Just Voted!",
+                    description=f"{self.bot._emojis['profitgreen']} We now have `{vote_len}` votes!",
                     timestamp=datetime.datetime.now(),
                     color=self.bot.green
                 )

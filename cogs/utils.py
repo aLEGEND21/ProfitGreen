@@ -139,7 +139,8 @@ class Utils(commands.Cog, name="Utility Commands"):
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        # Respond with the embed card of the quote if a quote is included in the message
+        # No longer in use due to this being turned into a message command
+        '''# Respond with the embed card of the quote if a quote is included in the message
         if "$" in message.content:
             await message.channel.trigger_typing()
             words = message.content.split(" ")
@@ -147,7 +148,7 @@ class Utils(commands.Cog, name="Utility Commands"):
                 if "$" in word:
                     quote_data = await self.bot.fetch_quote(word.strip("$"))
                     if quote_data.get("error") is None:
-                        await message.reply(embeds=[await self.bot.prepare_card(quote_data)], mention_author=False)
+                        await message.reply(embeds=[await self.bot.prepare_card(quote_data)], mention_author=False)'''
         # Check if the user mentioned the bot and reply with the prefix
         if self.bot.user in message.mentions:
             prefix = (await self.bot.get_prefix(message))[-1]

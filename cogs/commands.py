@@ -29,10 +29,8 @@ class Commands(commands.Cog, name="General Commands"):
     async def on_ready(self):
         print("cogs.commands is online")
     
-    # TODO: Figure out why the context menu disappears after message commands are run
-    '''
     @commands.message_command(
-        name="Show Quote Data"
+        name="Show Quote Data",
     )
     async def show_quote_data_from_message(self, ctx: discord.ApplicationContext, message: discord.Message):
         found = False # Track if any results were found
@@ -47,7 +45,6 @@ class Commands(commands.Cog, name="General Commands"):
                         await ctx.respond(embeds=[await self.bot.prepare_card(quote_data)])
         if not found:
             await ctx.respond(":x: No quotes found in the message", ephemeral=True)
-    '''
 
     @commands.command(
         name="quote",

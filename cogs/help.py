@@ -26,7 +26,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         # Figure out how much the spacing should be between the commands and the description
         max_len = 0
         for cmd in self.context.bot.commands:
-            if cmd.hidden:
+            if not isinstance(cmd, commands.Command) or cmd.hidden:
                 continue 
             if len(cmd.name) > max_len:
                 max_len = len(cmd.name)
@@ -47,8 +47,8 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
             # Set cog title
             desc += f"{emoji}**{cog.qualified_name}:**\n" if cog is not None else ":notepad_spiral: **Uncategorized Commands:**\n"
             for cmd in mapping[cog]:
-                # Skip over hidden commands
-                if cmd.hidden:
+                # Skip over hidden commands and commands that aren't prefixed commands
+                if not isinstance(cmd, commands.Command) or cmd.hidden:
                     continue
                 # Set the amount of spacing between the command and the short_docs
                 spacing = "." * (max_len - len(cmd.name)) # Use periods because \u200b has variable width which messes up the spacing

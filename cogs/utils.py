@@ -26,6 +26,11 @@ class Utils(commands.Cog, name="Utility Commands"):
         # Cog data
         self.emoji = ":gear:"
     
+    def cog_unload(self):
+        """Cancels all tasks when cog is unloaded"""
+        self.update_stats.stop()
+        self.parse_votes.stop()
+    
     @commands.Cog.listener()
     async def on_ready(self):
         print("cogs.utils is online")

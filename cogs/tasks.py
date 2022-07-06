@@ -17,6 +17,10 @@ class TaskManager(commands.Cog):
         if Config.PRODUCTION:
             self.check_price_targets.start()
     
+    def cog_unload(self):
+        """Cancels all tasks when cog is unloaded"""
+        self.check_price_targets.stop()
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("cogs.tasks is online")

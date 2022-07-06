@@ -81,7 +81,8 @@ class ProfitGreenBot(commands.Bot):
                     "_id": user.id,
                     "username": f"{user.name}#{user.discriminator}",
                     "balance": self.portfolio_starting_value,
-                    "portfolio": []
+                    "portfolio": [],
+                    "trade_history": []
                 },
             )
     
@@ -92,6 +93,10 @@ class ProfitGreenBot(commands.Bot):
             if doc.get("_id") == user_id:
                 return doc
         return None
+    
+    async def log_trade(self, user_id: int, _type: str, ticker: str, quantity: int, price: float):
+        portfolio = await self.fetch_portfolio(user_id)
+        # TODO: Update the trade history dictionary
     
     @insensitive_ticker
     async def cnbc_data(self, ticker: str):

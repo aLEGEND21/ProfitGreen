@@ -15,6 +15,20 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         # Cog data
         self.emoji = ":dollar:"
     
+    """
+    Trade Logging:
+    "trade_history": [
+        {
+            "_type": "buy",
+            "datetime": "2022-07-06 10:10:52.165995",
+            "timestamp": 1657116677.7689857,
+            "ticker": "AAPL",
+            "quantity": 100,
+            "price": 123.456
+        }
+    ]
+    """
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("cogs.portfolio.py is online")

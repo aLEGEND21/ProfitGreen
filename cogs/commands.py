@@ -496,6 +496,78 @@ class Commands(commands.Cog, name="General Commands"):
         em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar)
 
         await ctx.send(embeds=[em])
+    
+    @commands.command(
+        name="marketoverview",
+        brief="Get a general overview of the market",
+        description="Get the overall sentiment of investors in the market by viewing data about the most popular indexes in the United States. The data includes information about people's status in the market (long/short) and the day's change for various indexes.",
+        aliases=['mo']
+    )
+    async def market_overview(self, ctx: commands.Context):
+        await ctx.trigger_typing()
+        
+        # Declare the function that will get the data from the url
+        async def get_data(index_path: str):
+            # Generate the url and make the request
+            url = f"https://www.ig.com/en/indices/markets-indices/{index_path}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    html = await resp.text()
+            # Parse the html and extract the data
+            soup = BeautifulSoup(html, "html.parser")
+            data = {}
+            data['name'] = soup.find('div', {'class': 'ma-content title ma__title--center'}).h1.text
+            data['ticker'] = soup.find('div', {'class': 'ma-content title ma__title--center'}).span.text.strip("()")
+            data['buy'] = soup.find('div', {'class': 'price-ticket__price', 'data-field': 'OFR'}).text
+            data['sell'] = soup.find('div', {'class': 'price-ticket__price', 'data-field': 'BID'}).text # Sell is called BID for some reason
+            data['sentiment-percent'] = soup.find('div', {'class': 'price-ticket__sentiment'}).div.span.text
+            data['sentiment'] = soup.find('div', {'class': 'price-ticket__sentiment'}).div.strong.text
+            data['high'] = soup.find('div', {'class': 'price-ticket__extremums'}).find_all('p')[0].span.text
+            data['low'] = soup.find('div', {'class': 'price-ticket__extremums'}).find_all('p')[1].span.text
+
+            # Get the change and percent change. In order to find out whether it is positive or
+            # negative, we must check if the index has gone up or down
+            change_elem = soup.findAll('span', {'class': 'price-ticket__change'})[0]
+            change_pct_elem = soup.findAll('span', {'class': 'price-ticket__change'})[1]
+            if float(data['low']) < float(data['buy']):
+                data['change'] = "+" + ''.join(change_elem.text.split())
+                data['change-percent'] = "(+" + ''.join(change_pct_elem.text.split()).strip("()") + ")"
+            else:
+                data['change'] = "-" + ''.join(change_elem.text.split())
+                data['change-percent'] = "(-" + ''.join(change_pct_elem.text.split()).strip("()") + ")"
+            
+            return data
+        
+        # Use asyncio.gather to run this function in parallel with the top three indexes
+        indexes = ["us-spx-500", "wall-street", "us-tech-100"] # S&P 500, Dow Jones, and Nasdaq 100
+        coros = []
+        [coros.append(get_data(index)) for index in indexes]
+        output = list(await asyncio.gather(*coros))
+        
+        # Retrieve the overall sentiment
+        overall_sentiment_pct = 0
+        overall_sentiment = None
+        for item in output:
+            if float(item['sentiment-percent'].strip("%")) > overall_sentiment_pct:
+                overall_sentiment_pct = float(item['sentiment-percent'].strip("%"))
+                overall_sentiment = item['sentiment']
+        
+        # Generate the embed
+        em = discord.Embed(
+            title=f":pushpin: Market Overview",
+            description="",
+            color=self.bot.green,
+            timestamp=datetime.datetime.now()
+        )
+        em.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar)
+
+        # Generate the description of the embed
+        for item in output:
+            #em.description += f"\n**{item['name']}** ({item['ticker']}) --- **Buy**: `${item['buy']}`, **Sell**: `${item['sell']}`"
+            em.description += f"\n**{item['name']}** ({item['ticker']}) --- **Day's Change:** `{item['change']} {item['change-percent']}`"
+        em.description += f"\n\n*`{overall_sentiment_pct}%` of investors are `{overall_sentiment}` on this market.*"
+
+        await ctx.send(embeds=[em])
 
     @commands.command(
         name="news",

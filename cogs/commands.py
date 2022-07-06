@@ -417,7 +417,7 @@ class Commands(commands.Cog, name="General Commands"):
             if relavence_score > 0.5: # Only display articles with a high relevance score
                 articles.append(item)
         else:
-            articles = articles[:3] # Retrieve the first three articles if there weren't enough relevent articles
+            articles = articles[:3] # Retrieve the first three articles if there weren't enough relevant articles
 
 
         # Construct the fields of the embed using the article data

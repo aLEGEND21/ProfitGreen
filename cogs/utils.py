@@ -90,7 +90,7 @@ class Utils(commands.Cog, name="Utility Commands"):
             em = discord.Embed(
                 title=":gem: Here is Your Vote Reward!",
                 description=f"""
-                Hey `{user.name}`, you just recieved `{shares}` shares of `{stock}` worth `${total}`!
+                Hey `{user.name}`, you just received `{shares}` shares of `{stock}` worth `${total}`!
 
                 :heart: Thanks for voting!
                 """,

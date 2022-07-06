@@ -118,8 +118,8 @@ class ErrorHandler(commands.Cog):
             # All other Errors not returned come here. And we can just print the default TraceBack.
             print('Ignoring exception in command {}:'.format(ctx.command.name), file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-            # Notify the user an error occured
-            await ctx.reply(f"An unexpected error occured in command `{ctx.command.name}`.")
+            # Notify the user an error occurred
+            await ctx.reply(f"An unexpected error occurred in command `{ctx.command.name}`.")
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))

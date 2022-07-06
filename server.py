@@ -14,7 +14,7 @@ REMIND_USERS = [
     516066882256764950  # TheGroke#1123
 ]
 
-# Initalize the app
+# Initialize the app
 app = Flask(__name__)
 
 # Connect to the database

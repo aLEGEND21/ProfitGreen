@@ -109,7 +109,7 @@ class ProfitGreenBot(commands.Bot):
         Returns:
             dict: A dict containing the price or an error code.
         """
-        # The function that will preform the synchronous request to the API
+        # The function that will perform the synchronous request to the API
         def sync_request(ticker: str):
             quote_object = cnbcfinance.Cnbc(ticker)
             result = quote_object.get_quote()

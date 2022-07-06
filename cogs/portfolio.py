@@ -79,7 +79,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             em.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.display_avatar)
             return await ctx.send(embeds=[em])
 
-        # Retrive the current prices of the quotes in the user's portfolio
+        # Retrieve the current prices of the quotes in the user's portfolio
         coroutines = []
         for quote in portfolio:
             coroutines.append(self.bot.fetch_brief(quote["ticker"]))
@@ -216,7 +216,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         
         # Format variables
         ticker = ticker.upper()
-        #if "-" in ticker: return await ctx.send(":x: Sorry, cryptocurrencies are not yet supprted, but will be soon.") # No crypto support yet :(
+        #if "-" in ticker: return await ctx.send(":x: Sorry, cryptocurrencies are not yet supported, but will be soon.") # No crypto support yet :(
         try:
             quantity = int(quantity)
             if quantity < 1:

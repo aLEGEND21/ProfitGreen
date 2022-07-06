@@ -9,6 +9,7 @@ import asyncio
 import sqlite3
 import functools
 import ssl
+import time
 import random
 import cnbcfinance
 import motor.motor_asyncio
@@ -94,9 +95,26 @@ class ProfitGreenBot(commands.Bot):
                 return doc
         return None
     
-    async def log_trade(self, user_id: int, _type: str, ticker: str, quantity: int, price: float):
-        portfolio = await self.fetch_portfolio(user_id)
-        # TODO: Update the trade history dictionary
+    async def log_trade(self, user_id: int, _type: str, ticker: str, quantity: int, price: float, vote_reward=False):
+        # Fetch the user's portfolio
+        portfolio_data = await self.fetch_portfolio(user_id)
+        # Update the trade_history field of the user's portfolio
+        portfolio_data["trade_history"].append(
+            {
+                "_type": _type,
+                "datetime": str(datetime.datetime.now().replace(microsecond=0)), # Round down to the nearest second
+                "timestamp": round(time.time()), # Round down to the nearest second
+                "ticker": ticker,
+                "quantity": quantity,
+                "price": price,
+                "vote_reward": vote_reward
+            }
+        )
+        # Upload the changes to the database
+        await self.portfolio.update_one(
+            {"_id": user_id},
+            {"$set": portfolio_data}
+        )
     
     @insensitive_ticker
     async def cnbc_data(self, ticker: str):

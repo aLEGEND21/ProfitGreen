@@ -24,7 +24,8 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             "timestamp": 1657116677.7689857,
             "ticker": "AAPL",
             "quantity": 100,
-            "price": 123.456
+            "price": 123.456,
+            "vote_reward": True
         }
     ]
     """

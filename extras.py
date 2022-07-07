@@ -102,7 +102,7 @@ class ProfitGreenBot(commands.Bot):
         portfolio_data["trade_history"].append(
             {
                 "_type": _type,
-                "datetime": str(datetime.datetime.now().replace(microsecond=0)), # Round down to the nearest second
+                "datetime": str(datetime.datetime.utcnow().replace(microsecond=0)), # Round down to the nearest second
                 "timestamp": round(time.time()), # Round down to the nearest second
                 "ticker": ticker,
                 "quantity": quantity,

@@ -86,6 +86,7 @@ class Utils(commands.Cog, name="Utility Commands"):
                     "buy_price": price
                 })
             await self.bot.portfolio.update_one({"_id": user.id}, {"$set": portfolio})
+            await self.bot.log_trade(user.id, "BUY", stock, shares, price, vote_reward=True) # Log the trade in the database
             # Notify the user
             em = discord.Embed(
                 title=":gem: Here is Your Vote Reward!",

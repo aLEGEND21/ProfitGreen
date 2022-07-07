@@ -19,7 +19,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
     Trade Logging:
     "trade_history": [
         {
-            "_type": "buy",
+            "_type": "BUY",
             "datetime": "2022-07-06 10:10:52.165995",
             "timestamp": 1657116677.7689857,
             "ticker": "AAPL",
@@ -296,6 +296,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
                 {"_id": ctx.author.id},
                 {"$set": portfolio_data}
             )
+            await self.bot.log_trade(ctx.author.id, "BUY", ticker.upper(), quantity, price) # Log the trade in the database as well
             # Edit the embed to show the user that the order was successful
             em.title = ""
             em.description = ":white_check_mark: Order successful!"
@@ -417,6 +418,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
                 {"_id": ctx.author.id},
                 {"$set": portfolio_data}
             )
+            await self.bot.log_trade(ctx.author.id, "SELL", ticker.upper(), quantity, price) # Log the trade in the database as well
             # Edit the embed to show the user that the order was successful
             em.title = ""
             em.description = ":white_check_mark: Order successful!"

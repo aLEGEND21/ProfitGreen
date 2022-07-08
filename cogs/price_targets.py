@@ -138,6 +138,10 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
 
         # Declare the button callback
         async def btn_callback(interaction: discord.Interaction):
+            # Check to make sure the correct user clicked the button
+            if interaction.user.id != ctx.author.id:
+                return await interaction.response.send_message(":x: You're not allowed to click that button.", ephemeral=True)
+
             # Retrieve the selected price target
             btn_id = int(interaction.data['custom_id'])
             selected_pt = price_targets[btn_id]

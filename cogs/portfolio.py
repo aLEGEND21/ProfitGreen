@@ -55,22 +55,27 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         description="Shows a detailed view of your portfolio. This includes your total portfolio value, the amount of cash you have, your net worth, number of holdings, and also data about each individual holding. The data for each holding includes the total value of that holding, your gain/loss, the buy price, and the number of shares you own.",
         aliases=["myportfolio", "mp"]
     )
-    async def portfolio(self, ctx: commands.Context):
+    async def portfolio(self, ctx: commands.Context, user: discord.Member = None):
         await ctx.trigger_typing()
 
+        if user is None:
+            user = ctx.author
+        else:
+            await self.bot.create_portfolio(user) # Make sure the user has an account in the portfolio collection
+
         # Retrieve the user's portfolio data from the database
-        portfolio_data = await self.bot.fetch_portfolio(ctx.author.id)
+        portfolio_data = await self.bot.fetch_portfolio(user.id)
         balance = portfolio_data["balance"]
         portfolio = portfolio_data["portfolio"]
 
         # Check to make sure the user has quotes in their portfolio
         if portfolio == []:
             em = discord.Embed(
-                title=f"{ctx.author.name}'s Portfolio",
+                title=f"{user.name}'s Portfolio",
                 description=f"""
                 :dollar: Total Cash: `${self.commify(balance)}`
                 
-                :exclamation: You don't own any quotes yet. 
+                :exclamation: {"You don't" if user == ctx.author else user.name + " doesn't"} own any quotes yet. 
                 
                 :moneybag: Buy a stock or crypto by typing `{ctx.clean_prefix}buy <ticker> [amount]`
                 """,
@@ -121,7 +126,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
 
         # Create the summary page embed
         summary_em = discord.Embed(
-            title=f"{ctx.author.display_name}'s Portfolio",
+            title=f"{user.display_name}'s Portfolio",
             description=f"""
             __**Portfolio Summary**__
             :moneybag: Total Portfolio Value: `${self.commify(total_val)}`
@@ -137,19 +142,19 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
             :card_index: Total Number of Holdings: `{self.commify(len(portfolio))}`
             :1234: Total Number of Shares: `{self.commify(total_num_shares)}`
 
-            *Use the select menu below to view your holdings in more detail*
+            *Use the select menu below to view {"your" if ctx.author == user else user.name + "'s"} holdings in more detail*
             """,
             timestamp=datetime.datetime.now(),
             color=discord.Color.green() if pct_change >= 0 else discord.Color.red()
         )
-        summary_em.set_thumbnail(url=ctx.author.display_avatar)
+        summary_em.set_thumbnail(url=user.display_avatar)
         summary_em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
 
         # Create the embeds for each quote in the user's portfolio
         quote_pages = [summary_em]
         for quote_data in price_data:
             em = discord.Embed(
-                title=f"{ctx.author.display_name}'s Portfolio: `{quote_data['ticker']}`",
+                title=f"{user.display_name}'s Portfolio: `{quote_data['ticker']}`",
                 description=f"""
                 __**Holding Summary**__
                 :moneybag: Total Value: `${self.commify(quote_data['total_val'])}`
@@ -165,7 +170,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
                 timestamp=datetime.datetime.now(),
                 color=discord.Color.green() if quote_data['holding_change_pct'] >= 0 else discord.Color.red()
             )
-            em.set_thumbnail(url=ctx.author.display_avatar)
+            em.set_thumbnail(url=user.display_avatar)
             em.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.display_avatar)
             quote_pages.append(em)
 

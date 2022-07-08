@@ -42,7 +42,7 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
     async def add_price_target(self, ctx: commands.Context, quote_ticker: str, target_price: str):
         await ctx.trigger_typing()
         # Check that the ticker is a valid ticker
-        quote_data = await self.bot.fetch_quote(quote_ticker)
+        quote_data = await self.bot.fetch_brief(quote_ticker)
         if quote_data.get("error") is not None:
             return await ctx.send(f":x: I could not find a quote with ticker `{quote_ticker.upper()}`.")
         

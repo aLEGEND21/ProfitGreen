@@ -14,6 +14,18 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
         # Cog data
         self.emoji = ":dart:"
     
+    """
+    Example Price Target:
+    {
+        "_id": ObjectID("5e8f8f8f8f8f8f8f8f8f8f"),
+        "_type": "price_alert",
+        "user_id": 1234123412341234,
+        "quote_ticker": "AAPL",
+        "target_price": 210.98,
+        "execute": "ABOVE" # (or "BELOW")
+    }
+    """
+    
     @commands.Cog.listener()
     async def on_ready(self):
         print("cogs.price_targets is online")
@@ -43,21 +55,25 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
         else:
             # Prevent the user from providing a target price that is lower than the current price
             if target_price < float(quote_data["price"]):
-                return await ctx.send(f":x: You must specify a target price that is above the current quote price.")
-            
+                execute = "BELOW"
+            elif target_price > float(quote_data["price"]):
+                execute = "ABOVE"
+            else:
+                return await ctx.send(f":x: The target price cannot be the same as the current price.")
+
             quote_ticker = quote_ticker.upper() # Capitalize the ticker
             target_price = round(target_price, 5) # Prevent long decimals from being stored
             
-            # Check if the user already has a price target for this quote
-            doc = await self.bot.tasks.find_one(
+            # Check if the user already has 3 price targets for the quote
+            cursor = self.bot.tasks.find(
                 {
                     "_type": "price_alert",
                     "user_id": ctx.author.id,
                     "quote_ticker": quote_ticker,
                 }
             )
-            if doc is not None:
-                return await ctx.send(f":x: You already have a price target for this quote.")
+            if len(await cursor.to_list(length=None)) >= 3:
+                return await ctx.send(f":x: You cannot set more than 3 price targets for a quote.")
 
             # Add the quote_ticker and target_price to the database
             await self.bot.tasks.insert_one(
@@ -66,14 +82,15 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
                     "user_id": ctx.author.id,
                     "quote_ticker": quote_ticker,
                     "target_price": target_price,
+                    "execute": execute,
                 }
             )
-            await ctx.send(f"Price target added for `{quote_ticker}` at `{target_price}`.")
+            await ctx.send(f":white_check_mark: You will be notified when `{quote_ticker}` goes {execute.lower()} `${target_price}`.")
 
     @commands.command(
         name="removepricetarget",
         brief="Removes a price target",
-        description="Remove a price target you previously set.",
+        description="Remove a price target you previously set. If you have set multiple price targets for a ticker, then you will be able to choose which one to remove.",
         aliases=["removept", "rpt", "deletepricetarget", "deletept", "delpt", "dpt"],
         extras={
             "usage_examples": ["AAPL", "TSLA", "BTC-USD"],
@@ -82,30 +99,83 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
     async def remove_price_target(self, ctx: commands.Context, quote_ticker: str):
         # Format args
         quote_ticker = quote_ticker.upper()
-
-        """# Check that the ticker is a valid ticker
-        if await self.bot.fetch_quote(quote_ticker) == False:
-            return await ctx.send(f"I could not find a quote with ticker `{quote_ticker.upper()}`.")"""
         
-        # Delete the price target from the database
-        result = await self.bot.tasks.delete_one(
+        # Fetch all of the user's price targets for the ticker from the database
+        cursor = self.bot.tasks.find(
             {
                 "_type": "price_alert",
                 "user_id": ctx.author.id,
-                "quote_ticker": quote_ticker,
+                "quote_ticker": quote_ticker
             }
         )
+        price_targets = await cursor.to_list(length=None)
 
-        # Send a success or failure message
-        if result.deleted_count == 1:
-            await ctx.send(f"Price target successfully removed from `{quote_ticker.upper()}`.")
-        else:
-            await ctx.send(f":x: You have not set a price target for `{quote_ticker.upper()}`.")
+        # Check if the user has any price targets for the ticker
+        if len(price_targets) == 0:
+            return await ctx.send(f":x: You do not have any price targets for `{quote_ticker}`.")
+
+        # If the user only has one price target set for the ticker, remove it
+        if len(price_targets) == 1:
+            await self.bot.tasks.delete_one(
+                {
+                    "_id": price_targets[0]["_id"]
+                }
+            )
+            return await ctx.send(f":white_check_mark: Your price target for `{quote_ticker}` has been removed.")
+
+        # Create the embed containing all of the price targets
+        em = discord.Embed(
+            title=f"Price Targets for {quote_ticker}",
+            description="```",
+            color=self.bot.green,
+        )
+        em.set_footer(text=f"Select the price target to remove")
+        
+        # Generate the embed description
+        for i, pt in enumerate(price_targets):
+            em.description += f"[{i+1}] Executes {pt['execute']} ${pt['target_price']}\n"
+        em.description += "```"
+
+        # Declare the button callback
+        async def btn_callback(interaction: discord.Interaction):
+            # Retrieve the selected price target
+            btn_id = int(interaction.data['custom_id'])
+            selected_pt = price_targets[btn_id]
+
+            # Remove the price target from the database
+            await self.bot.tasks.delete_one({"_id": selected_pt["_id"]})
+            await interaction.response.send_message(f":white_check_mark: Removed price target for `{quote_ticker}`.")
+            
+            # Regenerate the embed and disable all the buttons
+            em.description = "```"
+            for i, pt in enumerate(price_targets):
+                if i == btn_id:
+                    em.description += f"[{i+1}] DELETED\n"
+                else:
+                    em.description += f"[{i+1}] Executes {pt['execute']} ${pt['target_price']}\n"
+            em.description += "```"
+            em.set_footer(text="Price target successfully removed")
+            view.disable_all_items()
+            await interaction.followup.edit_message(m.id, embeds=[em], view=view)
+
+        # Create the buttons and add them to the view
+        btns = {}
+        for i, pt in enumerate(price_targets):
+            btns[i] = discord.ui.Button(
+                style=discord.ButtonStyle.blurple,
+                label=f"[{i+1}]",
+                custom_id=str(i),
+            )
+            btns[i].callback = btn_callback
+        view = discord.ui.View(*list(btns.values()))
+
+        # Send the embed and wait for the user to select a price target
+        m = await ctx.reply(embeds=[em], view=view)
 
     @commands.command(
         name="pricetargets",
         brief="Lists all your price targets",
-        description="View all price targets that you have set. Price targets that have reached their target price will not be displayed.",
+        description="View all price targets that you have set. Once you are notified about a price target being reached, the target will no longer be displayed here.",
         aliases=["pricetarget", "pt"]
     )
     async def pricetargets(self, ctx: commands.Context):
@@ -116,27 +186,36 @@ class PriceTargets(commands.Cog, name="Price Target Commands"):
                 "user_id": ctx.author.id,
             }
         )
-
-        price_targets = []
-        for doc in await cursor.to_list(length=None):
-            price_targets.append(doc)
+        price_targets = await cursor.to_list(length=None)
 
         # Check whether the user has any price targets
         if price_targets == []:
             return await ctx.send(f":x: You do not have any price targets. Create a price target by typing `{ctx.clean_prefix}addpricetarget <quote_ticker> <target_price>`.")
 
-        # Construct and send the embed containing all the price targets
-        em_desc = ""
+        # Store the price targets under the ticker they are for
         price_targets.sort(key=lambda p: p["quote_ticker"])
-        for pt in price_targets:
-            em_desc = f"{em_desc}\nTicker: **`{pt['quote_ticker']}`** --- Target Price: **`${pt['target_price']}`**"
+        _ = {}
+        for i, pt in enumerate(price_targets):
+            if pt["quote_ticker"] not in _:
+                _[pt["quote_ticker"]] = []
+            _[pt["quote_ticker"]].append(pt)
+        price_targets = _
+
+        # Construct and send the embed containing all the price targets
         em = discord.Embed(
             title=f":dart: {ctx.author.display_name}'s Price Targets",
-            description=em_desc,
+            description="```",
             timestamp=datetime.datetime.now(),
-            color=discord.Color.blurple()
+            color=self.bot.green,
         )
-        await ctx.send(embeds=[em])
+        for quote_ticker, targets in price_targets.items():
+            em.description += f"[{list(price_targets.keys()).index(quote_ticker)+1}] {quote_ticker.upper()}:\n"
+            for pt in targets:
+                em.description += f" - Executes {pt['execute']} ${pt['target_price']}\n"
+            em.description += "\n"
+        em.description += "```"
+        
+        await ctx.reply(embeds=[em])
 
 
 def setup(bot):

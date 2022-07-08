@@ -33,13 +33,20 @@ class TaskManager(commands.Cog):
         # Loop through each price target searching for ones that have been reached
         for pt in await cursor.to_list(length=None):
             quote_data = await self.bot.fetch_quote(pt["quote_ticker"])
+            
+            # Check if the quote has reached the target price
+            reached = False
+            if pt['execute'] == "ABOVE" and float(quote_data["price"]) > pt['target_price']:
+                reached = True
+            elif pt['execute'] == "BELOW" and float(quote_data["price"]) < pt['target_price']:
+                reached = True
 
-            if float(quote_data["price"]) > pt["target_price"]:
+            if reached:
                 # Fetch the user and generate the embed
                 user = await self.bot.fetch_user(pt["user_id"])
                 em = discord.Embed(
                     title=":dart: Price Target Reached",
-                    description=f"**`{pt['quote_ticker']}`** Reached A Price Target of **`${pt['target_price']}`**",
+                    description=f"**`{pt['quote_ticker']}`** has gone `{pt['execute']}` the target price of **`${pt['target_price']}`**",
                     color=discord.Color.green(),
                     timestamp=datetime.datetime.now()
                 )
@@ -53,8 +60,8 @@ class TaskManager(commands.Cog):
                             "_id": pt["_id"],
                         }
                     )
-                except discord.Forbidden:
-                    print(f"Unable to notify {user.name}#{user.discriminator} about price target on {pt[1]} for ${pt[2]} (403 Forbidden).")
+                except discord.errors.Forbidden:
+                    print(f"Unable to notify {user.name}#{user.discriminator} about price target on {pt['quote_ticker']} for ${pt['target_price']} (403 Forbidden).")
             
             await asyncio.sleep(1) # Prevent Yahoo Finance from ratelimiting the bot
 

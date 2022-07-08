@@ -52,7 +52,7 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
     @commands.command(
         name="portfolio",
         brief="Displays your portfolio",
-        description="Shows a detailed view of your portfolio. This includes your total portfolio value, the amount of cash you have, your net worth, number of holdings, and also data about each individual holding. The data for each holding includes the total value of that holding, your gain/loss, the buy price, and the number of shares you own.",
+        description="Shows a detailed view of your portfolio. This includes your total portfolio value, the amount of cash you have, your net worth, number of holdings, and also data about each individual holding. The data for each holding includes the total value of that holding, your gain/loss, the buy price, and the number of shares you own. If you wish to see the portfolio of another user, mention them for the `user` parameter.",
         aliases=["myportfolio", "mp"]
     )
     async def portfolio(self, ctx: commands.Context, user: discord.Member = None):

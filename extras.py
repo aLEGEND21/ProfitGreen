@@ -156,25 +156,39 @@ class ProfitGreenBot(commands.Bot):
     
     @insensitive_ticker
     async def fetch_brief(self, quote_ticker: str):
-        if quote_ticker.upper().endswith("-USD"):
-            _output = await self.fetch_quote(quote_ticker)
-            # Check that its a valid ticker
-            if _output.get("error") is None:
-                output = {
-                    "_type": _output["_type"],
-                    "change": _output["change-dollar"],
-                    "change_pct": _output["change-percent"],
-                    "name": _output["name"][:-len(f" ({quote_ticker}-USD)")], # Remove the ticker from the name
-                    "open": float(_output["open"]),
-                    "price": float(_output["price"]),
-                    "ticker": _output["ticker"]
+        """Fetches some brief data about a quote from the CNBC Finance API or from Yahoo Finance."""
+        
+        async def make_yf_req(quote_ticker):
+            """Retrieves the quote from Yahoo Finance and reformats the data."""
+            data = await self.fetch_quote(quote_ticker)
+            if data.get("error") is None:
+                return {
+                    "_type": data["_type"],
+                    "change": data["change-dollar"],
+                    "change_pct": data["change-percent"],
+                    "name": data["name"][:-len(f" ({quote_ticker}-USD)")], # Remove the ticker from the name
+                    "open": float(data["open"]),
+                    "price": float(data["price"]),
+                    "ticker": data["ticker"]
                 }
             else:
-                output = _output
-            print(output)
+                return data
+
+        # All cryptos are handled by Yahoo Finance
+        if quote_ticker.upper().endswith("-USD"):
+            output = await make_yf_req(quote_ticker)
         else:
-            output = await self.cnbc_data(quote_ticker)
-            print(output)
+            # Try to get the quote from CNBC Finance however sometimes an Exception is raised
+            try:
+                output = await self.cnbc_data(quote_ticker)
+            except:
+                output = {
+                    "error": "Could not find the ticker.",
+                    "error_code": 404
+                }
+            # Use Yahoo Finance if the ticker is not found in CNBC Finance
+            if output.get("error") is not None:
+                output = await make_yf_req(quote_ticker)
         return output
     
     @insensitive_ticker

@@ -74,6 +74,17 @@ class ProfitGreenBot(commands.Bot):
         for stock in rewards:
             self.reward_stocks[stock] = random.randint(15, 25)
     
+    def commify(self, n):
+        """Adds commas to a number and returns it as a string.
+
+        Args:
+            n (float): The number of commify
+
+        Returns:
+            str: A string of the number with commas
+        """
+        return '{:,}'.format(n)
+    
     async def create_portfolio(self, user: discord.User):
         if await self.fetch_portfolio(user.id) is None:
             user = await self.fetch_user(user.id)

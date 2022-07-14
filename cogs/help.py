@@ -107,6 +107,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
                 spacing = "." * (max_len - len(c.name)) # Use periods because \u200b has variable width which messes up the spacing
                 # Add the command to the embed description
                 p.description += f"{indent}`{c.name}` `{spacing}` *{c.short_doc}*\n" if c.short_doc != "" else f"{indent}`{c.name}`\n"
+            p.description += f"\n*Type `{self.context.prefix}help <command>` for more info on a command*"
             pages.append(p)
 
         # Create the callback for the select menu

@@ -84,8 +84,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         await self.context.send(embeds=[em], view=view)
     
     async def send_command_help(self, command: commands.Command):
-        # Create something showing proper command usage from the usage examples
-        # TODO: Do this after creating the full help command ^
+        # TODO: Create something showing proper command usage from the usage examples
 
         # Format the command aliases
         if command.aliases != []:
@@ -121,7 +120,16 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
             timestamp=datetime.datetime.now()
         )
 
-        await self.context.send(embeds=[em])
+        # Generate any buttons needed for the help command
+        view = discord.ui.View()
+        if command.extras.get("links") is not None:
+            for label, url in command.extras["links"].items():
+                view.add_item(discord.ui.Button(
+                    label=label,
+                    url=url
+                ))
+
+        await self.context.send(embeds=[em], view=view)
 
 
 def setup(bot):

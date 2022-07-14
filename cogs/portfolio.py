@@ -203,7 +203,10 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         brief="Buy a quote",
         description="Buy more shares of a quote for your portfolio. If you want to buy multiple shares at a time, supply the number of shares you wish to buy for the `quantity` parameter.\n\nIf you wish to place a limit order, provide `limit` for the `order_type` parameter and the specified price at which the order should execute for the `execute_price` parameter. All orders are treated as market orders by default so don't worry if you don't know what a limit order is.",
         extras={
-            "usage_examples": ["AAPL", "XLE 5", "MSFT 23 limit 232.12"]
+            "usage_examples": ["AAPL", "XLE 5", "MSFT 23 limit 232.12"],
+            "links": {
+                "What is a limit order?": "https://www.investopedia.com/terms/l/limitorder.asp"
+            }
         }
     )
     async def buy(self, ctx: commands.Context, ticker: str, quantity: str = "1", order_type: str = "market", execute_price: str = None):
@@ -380,7 +383,10 @@ class Portfolio(commands.Cog, name="Portfolio Commands"):
         brief="Sell a quote",
         description="Sell a quote from your portfolio. You can sell multiples shares at a time by providing the number of shares you wish to sell for the `quantity` parameter.\n\nIf you wish to place a limit order, provide `limit` for the `order_type` parameter and the specified price at which the order should execute for the `execute_price` parameter. All orders are treated as market orders by default so don't worry if you don't know what a limit order is.",
         extras={
-            "usage_examples": ["AMZN", "XLE 15", "TSLA 234 limit 653.45"]
+            "usage_examples": ["AMZN", "XLE 15", "TSLA 234 limit 653.45"],
+            "links": {
+                "What is a limit order?": "https://www.investopedia.com/terms/l/limitorder.asp"
+            }
         }
     )
     async def sell(self, ctx: commands.Context, ticker: str, quantity: str = "1", order_type: str = "market", execute_price: str = None):

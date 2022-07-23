@@ -1,3 +1,4 @@
+print("Test Change")
 # Imports
 import discord
 from discord.ext import commands

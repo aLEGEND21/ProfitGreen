@@ -85,7 +85,7 @@ class ProfitGreenHelpCommand(commands.HelpCommand):
         pages = [
             discord.Embed(
                 title=f"ProfitGreen Bot Help",
-                description=f"{self.context.bot._emojis['profitgreen']} ProfitGreen is a Discord bot with a wide array of finance and investing related commands, allowing you to do everything from invest in stocks and cryptos to viewing the sentiment of individual stocks or the entire stock market.\n\n*Use the select menu below to view the commands for a specific category.*",
+                description=f"{self.context.bot._emojis['profitgreen']} ProfitGreen is a Discord bot with a wide array of finance and investing related commands, allowing you to do everything from invest in stocks and cryptos to viewing the sentiment of individual stocks or the entire stock market.\n\nNotes:\n<> = Required Argument\n[] = Optional Argument\n*Don't type <> or [] when running a command*\n\n*Use the select menu below to view the commands for a specific category.*",
                 color=self.context.bot.green,
                 timestamp=datetime.datetime.now()
             )
